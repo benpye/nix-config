@@ -2,9 +2,6 @@
 
 {
   home.sessionPath = [ "/Applications/Visual Studio Code - Insiders.app/Contents/Resources/app/bin" ];
-  home.packages = [
-    pkgs.gnupg
-  ];
 
   programs.git = {
     enable = true;
@@ -17,6 +14,10 @@
   };
 
   programs.go = {
+    enable = true;
+  };
+
+  programs.gpg = {
     enable = true;
   };
 

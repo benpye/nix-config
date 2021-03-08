@@ -6,35 +6,35 @@ with lib;
   options = {
     systemd.user = {
       services = mkOption {
-          apply = _: { };
+        apply = _: { };
       };
 
       slices = mkOption {
-          apply = _: { };
+        apply = _: { };
       };
 
       sockets = mkOption {
-          apply = _: { };
+        apply = _: { };
       };
 
       targets = mkOption {
-          apply = _: { };
+        apply = _: { };
       };
 
       timers = mkOption {
-          apply = _: { };
+        apply = _: { };
       };
 
       paths = mkOption {
-          apply = _: { };
+        apply = _: { };
       };
 
       mounts = mkOption {
-          apply = _: { };
+        apply = _: { };
       };
 
       sessionVariables = mkOption {
-          apply = _: { };
+        apply = _: { };
       };
     };
   };

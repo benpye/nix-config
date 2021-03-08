@@ -3,6 +3,8 @@
 {
   home.sessionPath = [ "/Applications/Visual Studio Code - Insiders.app/Contents/Resources/app/bin" ];
 
+  home.packages = [ ];
+
   programs.git = {
     enable = true;
     signing = {
@@ -26,9 +28,20 @@
     matchBlocks = {
       "*" = {
         user = "ben";
+        extraOptions = {
+          ControlMaster = "auto";
+          ControlPath = "~/.ssh/sockets/%r@%h-%p";
+          ControlPersist = "600";
+        };
       };
 
-      "nixos" = {
+      "nixserve" = {
+        forwardAgent = true;
+      };
+
+      "nixvm-aarch64" = {
+        hostname = "localhost";
+        port = 2222;
         forwardAgent = true;
       };
     };

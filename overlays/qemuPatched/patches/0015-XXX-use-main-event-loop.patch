@@ -1,0 +1,302 @@
+From 11e483324c25c7f9b6eaa2c15de77b897bf55312 Mon Sep 17 00:00:00 2001
+From: Alexander Graf <agraf@csgraf.de>
+Date: Thu, 11 Feb 2021 00:42:45 +0100
+Subject: [PATCH 15/21] XXX use main event loop
+
+---
+ target/arm/hvf/hvf.c | 270 +++++++++++++++++++++----------------------
+ 1 file changed, 133 insertions(+), 137 deletions(-)
+
+diff --git a/target/arm/hvf/hvf.c b/target/arm/hvf/hvf.c
+index 8294723e00..40c8331ae4 100644
+--- a/target/arm/hvf/hvf.c
++++ b/target/arm/hvf/hvf.c
+@@ -520,155 +520,151 @@ int hvf_vcpu_exec(CPUState *cpu)
+     CPUARMState *env = &arm_cpu->env;
+     hv_vcpu_exit_t *hvf_exit = cpu->hvf->exit;
+     hv_return_t r;
++    bool advance_pc = false;
+ 
+-    while (1) {
+-        bool advance_pc = false;
++    flush_cpu_state(cpu);
+ 
+-        qemu_wait_io_event_common(cpu);
+-        flush_cpu_state(cpu);
++    if (hvf_inject_interrupts(cpu)) {
++        return EXCP_INTERRUPT;
++    }
+ 
+-        if (hvf_inject_interrupts(cpu)) {
+-            return EXCP_INTERRUPT;
+-        }
++    if (cpu->halted) {
++        return EXCP_HLT;
++    }
+ 
+-        if (cpu->halted) {
+-            return EXCP_HLT;
+-        }
++    qemu_mutex_unlock_iothread();
++    assert_hvf_ok(hv_vcpu_run(cpu->hvf->fd));
++
++    /* handle VMEXIT */
++    uint64_t exit_reason = hvf_exit->reason;
++    uint64_t syndrome = hvf_exit->exception.syndrome;
++    uint32_t ec = syn_get_ec(syndrome);
+ 
+-        qemu_mutex_unlock_iothread();
+-        assert_hvf_ok(hv_vcpu_run(cpu->hvf->fd));
+-
+-        /* handle VMEXIT */
+-        uint64_t exit_reason = hvf_exit->reason;
+-        uint64_t syndrome = hvf_exit->exception.syndrome;
+-        uint32_t ec = syn_get_ec(syndrome);
+-
+-        qemu_mutex_lock_iothread();
+-        switch (exit_reason) {
+-        case HV_EXIT_REASON_EXCEPTION:
+-            /* This is the main one, handle below. */
+-            break;
+-        case HV_EXIT_REASON_VTIMER_ACTIVATED:
+-            qemu_set_irq(arm_cpu->gt_timer_outputs[GTIMER_VIRT], 1);
+-            continue;
+-        case HV_EXIT_REASON_CANCELED:
+-            /* we got kicked, no exit to process */
+-            continue;
+-        default:
+-            assert(0);
++    qemu_mutex_lock_iothread();
++    switch (exit_reason) {
++    case HV_EXIT_REASON_EXCEPTION:
++        /* This is the main one, handle below. */
++        break;
++    case HV_EXIT_REASON_VTIMER_ACTIVATED:
++        qemu_set_irq(arm_cpu->gt_timer_outputs[GTIMER_VIRT], 1);
++        return 0;
++    case HV_EXIT_REASON_CANCELED:
++        /* we got kicked, no exit to process */
++        return 0;
++    default:
++        assert(0);
++    }
++
++    switch (ec) {
++    case EC_DATAABORT: {
++        bool isv = syndrome & ARM_EL_ISV;
++        bool iswrite = (syndrome >> 6) & 1;
++        bool s1ptw = (syndrome >> 7) & 1;
++        uint32_t sas = (syndrome >> 22) & 3;
++        uint32_t len = 1 << sas;
++        uint32_t srt = (syndrome >> 16) & 0x1f;
++        uint64_t val = 0;
++
++        trace_hvf_data_abort(env->pc, hvf_exit->exception.virtual_address,
++                             hvf_exit->exception.physical_address, isv,
++                             iswrite, s1ptw, len, srt);
++
++        assert(isv);
++
++        if (iswrite) {
++            val = hvf_get_reg(cpu, srt);
++            address_space_write(&address_space_memory,
++                                hvf_exit->exception.physical_address,
++                                MEMTXATTRS_UNSPECIFIED, &val, len);
++
++            /*
++             * We do not have a callback to see if the timer is out of
++             * pending state. That means every MMIO write could
++             * potentially be an EOI ends the vtimer. Until we get an
++             * actual callback, let's just see if the timer is still
++             * pending on every possible toggle point.
++             */
++            qemu_set_irq(arm_cpu->gt_timer_outputs[GTIMER_VIRT], 0);
++            hv_vcpu_set_vtimer_mask(cpu->hvf->fd, false);
++        } else {
++            address_space_read(&address_space_memory,
++                               hvf_exit->exception.physical_address,
++                               MEMTXATTRS_UNSPECIFIED, &val, len);
++            hvf_set_reg(cpu, srt, val);
+         }
+ 
+-        switch (ec) {
+-        case EC_DATAABORT: {
+-            bool isv = syndrome & ARM_EL_ISV;
+-            bool iswrite = (syndrome >> 6) & 1;
+-            bool s1ptw = (syndrome >> 7) & 1;
+-            uint32_t sas = (syndrome >> 22) & 3;
+-            uint32_t len = 1 << sas;
+-            uint32_t srt = (syndrome >> 16) & 0x1f;
+-            uint64_t val = 0;
+-
+-            trace_hvf_data_abort(env->pc, hvf_exit->exception.virtual_address,
+-                                 hvf_exit->exception.physical_address, isv,
+-                                 iswrite, s1ptw, len, srt);
+-
+-            assert(isv);
+-
+-            if (iswrite) {
+-                val = hvf_get_reg(cpu, srt);
+-                address_space_write(&address_space_memory,
+-                                    hvf_exit->exception.physical_address,
+-                                    MEMTXATTRS_UNSPECIFIED, &val, len);
+-
+-                /*
+-                 * We do not have a callback to see if the timer is out of
+-                 * pending state. That means every MMIO write could
+-                 * potentially be an EOI ends the vtimer. Until we get an
+-                 * actual callback, let's just see if the timer is still
+-                 * pending on every possible toggle point.
+-                 */
+-                qemu_set_irq(arm_cpu->gt_timer_outputs[GTIMER_VIRT], 0);
+-                hv_vcpu_set_vtimer_mask(cpu->hvf->fd, false);
+-            } else {
+-                address_space_read(&address_space_memory,
+-                                   hvf_exit->exception.physical_address,
+-                                   MEMTXATTRS_UNSPECIFIED, &val, len);
+-                hvf_set_reg(cpu, srt, val);
+-            }
+-
+-            advance_pc = true;
+-            break;
++        advance_pc = true;
++        break;
++    }
++    case EC_SYSTEMREGISTERTRAP: {
++        bool isread = (syndrome >> 0) & 1;
++        uint32_t rt = (syndrome >> 5) & 0x1f;
++        uint32_t reg = syndrome & SYSREG_MASK;
++        uint64_t val = 0;
++
++        if (isread) {
++            val = hvf_sysreg_read(cpu, reg);
++            trace_hvf_sysreg_read(reg,
++                                  (reg >> 20) & 0x3,
++                                  (reg >> 14) & 0x7,
++                                  (reg >> 10) & 0xf,
++                                  (reg >> 1) & 0xf,
++                                  (reg >> 17) & 0x7,
++                                  val);
++            hvf_set_reg(cpu, rt, val);
++        } else {
++            val = hvf_get_reg(cpu, rt);
++            trace_hvf_sysreg_write(reg,
++                                   (reg >> 20) & 0x3,
++                                   (reg >> 14) & 0x7,
++                                   (reg >> 10) & 0xf,
++                                   (reg >> 1) & 0xf,
++                                   (reg >> 17) & 0x7,
++                                   val);
++            hvf_sysreg_write(cpu, reg, val);
+         }
+-        case EC_SYSTEMREGISTERTRAP: {
+-            bool isread = (syndrome >> 0) & 1;
+-            uint32_t rt = (syndrome >> 5) & 0x1f;
+-            uint32_t reg = syndrome & SYSREG_MASK;
+-            uint64_t val = 0;
+-
+-            if (isread) {
+-                val = hvf_sysreg_read(cpu, reg);
+-                trace_hvf_sysreg_read(reg,
+-                                      (reg >> 20) & 0x3,
+-                                      (reg >> 14) & 0x7,
+-                                      (reg >> 10) & 0xf,
+-                                      (reg >> 1) & 0xf,
+-                                      (reg >> 17) & 0x7,
+-                                      val);
+-                hvf_set_reg(cpu, rt, val);
+-            } else {
+-                val = hvf_get_reg(cpu, rt);
+-                trace_hvf_sysreg_write(reg,
+-                                       (reg >> 20) & 0x3,
+-                                       (reg >> 14) & 0x7,
+-                                       (reg >> 10) & 0xf,
+-                                       (reg >> 1) & 0xf,
+-                                       (reg >> 17) & 0x7,
+-                                       val);
+-                hvf_sysreg_write(cpu, reg, val);
+-            }
+-
+-            advance_pc = true;
+-            break;
++
++        advance_pc = true;
++        break;
++    }
++    case EC_WFX_TRAP:
++        advance_pc = true;
++        break;
++    case EC_AA64_HVC:
++        cpu_synchronize_state(cpu);
++        if (arm_is_psci_call(arm_cpu, EXCP_HVC)) {
++            arm_handle_psci_call(arm_cpu);
++        } else {
++            trace_hvf_unknown_hvf(env->xregs[0]);
++            env->xregs[0] = -1;
+         }
+-        case EC_WFX_TRAP:
+-            advance_pc = true;
+-            break;
+-        case EC_AA64_HVC:
+-            cpu_synchronize_state(cpu);
+-            if (arm_is_psci_call(arm_cpu, EXCP_HVC)) {
+-                arm_handle_psci_call(arm_cpu);
+-            } else {
+-                trace_hvf_unknown_hvf(env->xregs[0]);
+-                env->xregs[0] = -1;
+-            }
+-            break;
+-        case EC_AA64_SMC:
+-            cpu_synchronize_state(cpu);
+-            if (arm_is_psci_call(arm_cpu, EXCP_SMC)) {
+-                arm_handle_psci_call(arm_cpu);
+-            } else {
+-                trace_hvf_unknown_smc(env->xregs[0]);
+-                env->xregs[0] = -1;
+-            }
+-            // TODO!
+-            env->pc += 4;
+-            break;
+-        default:
+-            cpu_synchronize_state(cpu);
+-            trace_hvf_exit(syndrome, ec, env->pc);
+-            error_report("0x%llx: unhandled exit 0x%llx", env->pc, exit_reason);
++        break;
++    case EC_AA64_SMC:
++        cpu_synchronize_state(cpu);
++        if (arm_is_psci_call(arm_cpu, EXCP_SMC)) {
++            arm_handle_psci_call(arm_cpu);
++        } else {
++            trace_hvf_unknown_smc(env->xregs[0]);
++            env->xregs[0] = -1;
+         }
++        break;
++    default:
++        cpu_synchronize_state(cpu);
++        trace_hvf_exit(syndrome, ec, env->pc);
++        error_report("0x%llx: unhandled exit 0x%llx", env->pc, exit_reason);
++    }
+ 
+-        if (advance_pc) {
+-            uint64_t pc;
++    if (advance_pc) {
++        uint64_t pc;
+ 
+-            flush_cpu_state(cpu);
++        flush_cpu_state(cpu);
+ 
+-            r = hv_vcpu_get_reg(cpu->hvf->fd, HV_REG_PC, &pc);
+-            assert_hvf_ok(r);
+-            pc += 4;
+-            r = hv_vcpu_set_reg(cpu->hvf->fd, HV_REG_PC, pc);
+-            assert_hvf_ok(r);
+-        }
++        r = hv_vcpu_get_reg(cpu->hvf->fd, HV_REG_PC, &pc);
++        assert_hvf_ok(r);
++        pc += 4;
++        r = hv_vcpu_set_reg(cpu->hvf->fd, HV_REG_PC, pc);
++        assert_hvf_ok(r);
+     }
++
++    return 0;
+ }

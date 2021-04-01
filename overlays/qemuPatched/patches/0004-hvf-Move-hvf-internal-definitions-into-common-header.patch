@@ -1,0 +1,104 @@
+From ea0c13a2293e0bd7d8a9dd0a71f05d5abcd4a2c6 Mon Sep 17 00:00:00 2001
+From: Alexander Graf <agraf@csgraf.de>
+Date: Wed, 10 Feb 2021 21:31:10 +0100
+Subject: [PATCH 04/21] hvf: Move hvf internal definitions into common header
+
+Until now, Hypervisor.framework has only been available on x86_64 systems.
+With Apple Silicon shipping now, it extends its reach to aarch64. To
+prepare for support for multiple architectures, let's start moving common
+code out into its own accel directory.
+
+This patch moves a few internal struct and constant defines over.
+
+Signed-off-by: Alexander Graf <agraf@csgraf.de>
+---
+ include/sysemu/hvf_int.h   | 30 ++++++++++++++++++++++++++++++
+ target/i386/hvf/hvf-i386.h | 31 +------------------------------
+ 2 files changed, 31 insertions(+), 30 deletions(-)
+
+diff --git a/include/sysemu/hvf_int.h b/include/sysemu/hvf_int.h
+index 4c657b054c..ef84a24dd9 100644
+--- a/include/sysemu/hvf_int.h
++++ b/include/sysemu/hvf_int.h
+@@ -13,6 +13,36 @@
+ 
+ #include <Hypervisor/hv.h>
+ 
++/* hvf_slot flags */
++#define HVF_SLOT_LOG (1 << 0)
++
++typedef struct hvf_slot {
++    uint64_t start;
++    uint64_t size;
++    uint8_t *mem;
++    int slot_id;
++    uint32_t flags;
++    MemoryRegion *region;
++} hvf_slot;
++
++typedef struct hvf_vcpu_caps {
++    uint64_t vmx_cap_pinbased;
++    uint64_t vmx_cap_procbased;
++    uint64_t vmx_cap_procbased2;
++    uint64_t vmx_cap_entry;
++    uint64_t vmx_cap_exit;
++    uint64_t vmx_cap_preemption_timer;
++} hvf_vcpu_caps;
++
++struct HVFState {
++    AccelState parent;
++    hvf_slot slots[32];
++    int num_slots;
++
++    hvf_vcpu_caps *hvf_caps;
++};
++extern HVFState *hvf_state;
++
+ void hvf_set_phys_mem(MemoryRegionSection *, bool);
+ void assert_hvf_ok(hv_return_t ret);
+ hvf_slot *hvf_find_overlap_slot(uint64_t, uint64_t);
+diff --git a/target/i386/hvf/hvf-i386.h b/target/i386/hvf/hvf-i386.h
+index 94e5c788c4..76e9235524 100644
+--- a/target/i386/hvf/hvf-i386.h
++++ b/target/i386/hvf/hvf-i386.h
+@@ -18,39 +18,10 @@
+ 
+ #include "qemu/accel.h"
+ #include "sysemu/hvf.h"
++#include "sysemu/hvf_int.h"
+ #include "cpu.h"
+ #include "x86.h"
+ 
+-/* hvf_slot flags */
+-#define HVF_SLOT_LOG (1 << 0)
+-
+-typedef struct hvf_slot {
+-    uint64_t start;
+-    uint64_t size;
+-    uint8_t *mem;
+-    int slot_id;
+-    uint32_t flags;
+-    MemoryRegion *region;
+-} hvf_slot;
+-
+-typedef struct hvf_vcpu_caps {
+-    uint64_t vmx_cap_pinbased;
+-    uint64_t vmx_cap_procbased;
+-    uint64_t vmx_cap_procbased2;
+-    uint64_t vmx_cap_entry;
+-    uint64_t vmx_cap_exit;
+-    uint64_t vmx_cap_preemption_timer;
+-} hvf_vcpu_caps;
+-
+-struct HVFState {
+-    AccelState parent;
+-    hvf_slot slots[32];
+-    int num_slots;
+-
+-    hvf_vcpu_caps *hvf_caps;
+-};
+-extern HVFState *hvf_state;
+-
+ void hvf_handle_io(CPUArchState *, uint16_t, void *, int, int, int);
+ 
+ #ifdef NEED_CPU_H

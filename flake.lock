@@ -96,7 +96,7 @@
     "home-manager": {
       "inputs": {
         "nixpkgs": [
-          "nixpkgs-unstable"
+          "nixpkgs-darwin-aarch64"
         ]
       },
       "locked": {
@@ -117,7 +117,7 @@
       "inputs": {
         "flake-utils": "flake-utils",
         "nixpkgs": [
-          "nixpkgs-unstable"
+          "nixpkgs-darwin-aarch64"
         ]
       },
       "locked": {
@@ -192,6 +192,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-darwin-aarch64": {
+      "locked": {
+        "lastModified": 1616386591,
+        "narHash": "sha256-hGskYVosRcILU9kgTucz6ewbNUHnziyPTkOzCxaOp+A=",
+        "owner": "thefloweringash",
+        "repo": "nixpkgs",
+        "rev": "6cd3b0add9975674cabd5e5ed9b549a8b8cc5e8f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "thefloweringash",
+        "ref": "apple-silicon",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs-unstable": {
       "locked": {
         "lastModified": 1614212209,
@@ -215,6 +231,7 @@
         "home-manager": "home-manager",
         "launchd_shim": "launchd_shim",
         "nixos-2009": "nixos-2009",
+        "nixpkgs-darwin-aarch64": "nixpkgs-darwin-aarch64",
         "nixpkgs-unstable": "nixpkgs-unstable"
       }
     },

@@ -1,0 +1,39 @@
+From 55207cc35355a31bacf6eb534f59a25031ceac13 Mon Sep 17 00:00:00 2001
+From: Alexander Graf <agraf@csgraf.de>
+Date: Wed, 10 Feb 2021 21:38:02 +0100
+Subject: [PATCH 05/21] hvf: Make hvf_set_phys_mem() static
+
+The hvf_set_phys_mem() function is only called within the same file.
+Make it static.
+
+Signed-off-by: Alexander Graf <agraf@csgraf.de>
+---
+ accel/hvf/hvf-accel-ops.c | 2 +-
+ include/sysemu/hvf_int.h  | 1 -
+ 2 files changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/accel/hvf/hvf-accel-ops.c b/accel/hvf/hvf-accel-ops.c
+index c2136dfbb8..5bec7b4d6d 100644
+--- a/accel/hvf/hvf-accel-ops.c
++++ b/accel/hvf/hvf-accel-ops.c
+@@ -114,7 +114,7 @@ static int do_hvf_set_memory(hvf_slot *slot, hv_memory_flags_t flags)
+     return 0;
+ }
+ 
+-void hvf_set_phys_mem(MemoryRegionSection *section, bool add)
++static void hvf_set_phys_mem(MemoryRegionSection *section, bool add)
+ {
+     hvf_slot *mem;
+     MemoryRegion *area = section->mr;
+diff --git a/include/sysemu/hvf_int.h b/include/sysemu/hvf_int.h
+index ef84a24dd9..d15fa3302a 100644
+--- a/include/sysemu/hvf_int.h
++++ b/include/sysemu/hvf_int.h
+@@ -43,7 +43,6 @@ struct HVFState {
+ };
+ extern HVFState *hvf_state;
+ 
+-void hvf_set_phys_mem(MemoryRegionSection *, bool);
+ void assert_hvf_ok(hv_return_t ret);
+ hvf_slot *hvf_find_overlap_slot(uint64_t, uint64_t);
+ int hvf_put_registers(CPUState *);

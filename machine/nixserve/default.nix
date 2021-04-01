@@ -221,6 +221,11 @@
     interval = "Sun, 02:00";
   };
 
+  services.zfs.autoSnapshot = {
+    enable = true;
+    flags = "-k -p --utc";
+  };
+
   services.thelounge = {
     enable = true;
     private = true;
@@ -229,9 +234,38 @@
     };
   };
 
+  services.samba = {
+    enable = true;
+
+    extraConfig = ''
+      inherit permissions = yes
+
+      map archive = no
+      map hidden = no
+
+      vfs objects = shadow_copy2
+      shadow: snapdir = .zfs/snapshot
+      shadow: sort = desc
+      shadow: format = -%Y-%m-%d-%H%M
+      shadow: snapdirseverywhere = yes
+      shadow: snapprefix = ^zfs-auto-snap_\(frequent\)\{0,1\}\(hourly\)\{0,1\}\(daily\)\{0,1\}\(monthly\)\{0,1\}
+      shadow: delimiter = -20
+    '';
+
+    shares = {
+      library = {
+        path = "/tank/library";
+        browseable = "yes";
+        "read only" = "yes";
+        "write list" = "@sharewriters";
+        "force group" = "nogroup";
+      };
+    };
+  };
+
   users.users = {
     ben = {
-      extraGroups = [ "wheel" ];
+      extraGroups = [ "wheel" "sharewriters" ];
       uid = 1000;
       isNormalUser = true;
       openssh.authorizedKeys.keys =
@@ -242,6 +276,16 @@
 
     nginx = {
       extraGroups = [ "acme" ];
+    };
+  };
+
+  users.groups = {
+    share = {
+      gid = 1000;
+    };
+
+    sharewriters = {
+      gid = 1001;
     };
   };
 

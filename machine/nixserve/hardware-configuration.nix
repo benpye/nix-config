@@ -34,6 +34,26 @@
       fsType = "zfs";
     };
 
+  fileSystems."/tank" =
+    { device = "tank";
+      fsType = "zfs";
+    };
+
+  fileSystems."/tank/library" =
+    { device = "tank/library";
+      fsType = "zfs";
+    };
+
+  fileSystems."/tank/library/lightroom" =
+    { device = "tank/library/lightroom";
+      fsType = "zfs";
+    };
+
+  fileSystems."/tank/library/photos" =
+    { device = "tank/library/photos";
+      fsType = "zfs";
+    };
+
   swapDevices =
     [ { device = "/dev/disk/by-uuid/91c3108c-cb55-463f-8790-fc411064eaa2"; }
     ];

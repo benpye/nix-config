@@ -10,14 +10,18 @@
       url = "github:nixos/nixpkgs/nixpkgs-unstable";
     };
 
+    nixpkgs-darwin-aarch64 = {
+      url = "github:thefloweringash/nixpkgs/apple-silicon";
+    };
+
     home-manager = {
       url = "github:nix-community/home-manager";
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
+      inputs.nixpkgs.follows = "nixpkgs-darwin-aarch64";
     };
 
     launchd_shim = {
       url = "github:benpye/launchd_shim";
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
+      inputs.nixpkgs.follows = "nixpkgs-darwin-aarch64";
     };
 
     deploy-rs = {
@@ -31,7 +35,7 @@
     };
   };
 
-  outputs = { self, home-manager, launchd_shim, nixos-2009, deploy-rs, deploy-rs-2009, ... }: {
+  outputs = { self, home-manager, launchd_shim, nixos-2009, nixpkgs-unstable, deploy-rs, deploy-rs-2009, ... }: {
     # note that this is the only place we use `deploy-rs`, built with unstable nixpkgs:
     apps = builtins.mapAttrs (_: deploy: { inherit deploy; }) deploy-rs.defaultApp;
 
@@ -40,6 +44,7 @@
         configuration = {
           nixpkgs.overlays = [
             launchd_shim.overlay
+            (import ./overlays/qemuPatched)
           ];
           imports = [
             ./modules/launchd
@@ -51,7 +56,7 @@
             ./machine/m1pro
           ];
         };
-        system = "x86_64-darwin";
+        system = "aarch64-darwin";
         homeDirectory = "/Users/benpye";
         username = "benpye";
       };

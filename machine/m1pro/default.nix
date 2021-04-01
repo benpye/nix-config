@@ -3,7 +3,7 @@
 {
   home.sessionPath = [ "/Applications/Visual Studio Code - Insiders.app/Contents/Resources/app/bin" ];
 
-  home.packages = [ ];
+  home.packages = [ pkgs.qemu ];
 
   programs.git = {
     enable = true;

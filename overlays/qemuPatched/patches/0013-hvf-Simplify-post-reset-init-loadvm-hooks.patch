@@ -1,0 +1,94 @@
+From 26cb4c64b7176bfebd7c953c7fdfa8efe73dc2f2 Mon Sep 17 00:00:00 2001
+From: Alexander Graf <agraf@csgraf.de>
+Date: Thu, 3 Dec 2020 15:15:04 +0100
+Subject: [PATCH 13/21] hvf: Simplify post reset/init/loadvm hooks
+
+The hooks we have that call us after reset, init and loadvm really all
+just want to say "The reference of all register state is in the QEMU
+vcpu struct, please push it".
+
+We already have a working pushing mechanism though called cpu->vcpu_dirty,
+so we can just reuse that for all of the above, syncing state properly the
+next time we actually execute a vCPU.
+
+This fixes PSCI resets on ARM, as they modify CPU state even after the
+post init call has completed, but before we execute the vCPU again.
+
+To also make the scheme work for x86, we have to make sure we don't
+move stale eflags into our env when the vcpu state is dirty.
+
+Signed-off-by: Alexander Graf <agraf@csgraf.de>
+Reviewed-by: Roman Bolshakov <r.bolshakov@yadro.com>
+Tested-by: Roman Bolshakov <r.bolshakov@yadro.com>
+---
+ accel/hvf/hvf-accel-ops.c | 27 +++++++--------------------
+ target/i386/hvf/x86hvf.c  |  5 ++++-
+ 2 files changed, 11 insertions(+), 21 deletions(-)
+
+diff --git a/accel/hvf/hvf-accel-ops.c b/accel/hvf/hvf-accel-ops.c
+index ded918c443..d1691be989 100644
+--- a/accel/hvf/hvf-accel-ops.c
++++ b/accel/hvf/hvf-accel-ops.c
+@@ -205,39 +205,26 @@ static void hvf_cpu_synchronize_state(CPUState *cpu)
+     }
+ }
+ 
+-static void do_hvf_cpu_synchronize_post_reset(CPUState *cpu,
+-                                              run_on_cpu_data arg)
++static void do_hvf_cpu_synchronize_set_dirty(CPUState *cpu,
++                                             run_on_cpu_data arg)
+ {
+-    hvf_put_registers(cpu);
+-    cpu->vcpu_dirty = false;
++    /* QEMU state is the reference, push it to HVF now and on next entry */
++    cpu->vcpu_dirty = true;
+ }
+ 
+ static void hvf_cpu_synchronize_post_reset(CPUState *cpu)
+ {
+-    run_on_cpu(cpu, do_hvf_cpu_synchronize_post_reset, RUN_ON_CPU_NULL);
+-}
+-
+-static void do_hvf_cpu_synchronize_post_init(CPUState *cpu,
+-                                             run_on_cpu_data arg)
+-{
+-    hvf_put_registers(cpu);
+-    cpu->vcpu_dirty = false;
++    run_on_cpu(cpu, do_hvf_cpu_synchronize_set_dirty, RUN_ON_CPU_NULL);
+ }
+ 
+ static void hvf_cpu_synchronize_post_init(CPUState *cpu)
+ {
+-    run_on_cpu(cpu, do_hvf_cpu_synchronize_post_init, RUN_ON_CPU_NULL);
+-}
+-
+-static void do_hvf_cpu_synchronize_pre_loadvm(CPUState *cpu,
+-                                              run_on_cpu_data arg)
+-{
+-    cpu->vcpu_dirty = true;
++    run_on_cpu(cpu, do_hvf_cpu_synchronize_set_dirty, RUN_ON_CPU_NULL);
+ }
+ 
+ static void hvf_cpu_synchronize_pre_loadvm(CPUState *cpu)
+ {
+-    run_on_cpu(cpu, do_hvf_cpu_synchronize_pre_loadvm, RUN_ON_CPU_NULL);
++    run_on_cpu(cpu, do_hvf_cpu_synchronize_set_dirty, RUN_ON_CPU_NULL);
+ }
+ 
+ static void hvf_set_dirty_tracking(MemoryRegionSection *section, bool on)
+diff --git a/target/i386/hvf/x86hvf.c b/target/i386/hvf/x86hvf.c
+index c9febae7c8..1af86e1e54 100644
+--- a/target/i386/hvf/x86hvf.c
++++ b/target/i386/hvf/x86hvf.c
+@@ -432,7 +432,10 @@ int hvf_process_events(CPUState *cpu_state)
+     X86CPU *cpu = X86_CPU(cpu_state);
+     CPUX86State *env = &cpu->env;
+ 
+-    env->eflags = rreg(cpu_state->hvf->fd, HV_X86_RFLAGS);
++    if (!cpu_state->vcpu_dirty) {
++        /* light weight sync for CPU_INTERRUPT_HARD and IF_MASK */
++        env->eflags = rreg(cpu_state->hvf->fd, HV_X86_RFLAGS);
++    }
+ 
+     if (cpu_state->interrupt_request & CPU_INTERRUPT_INIT) {
+         cpu_synchronize_state(cpu_state);

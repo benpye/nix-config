@@ -1,0 +1,37 @@
+From b7381293b13335d664a04b637a7cb91616a56843 Mon Sep 17 00:00:00 2001
+From: Alexander Graf <agraf@csgraf.de>
+Date: Thu, 26 Nov 2020 18:14:51 +0100
+Subject: [PATCH 12/21] arm: Set PSCI to 0.2 for HVF
+
+In Hypervisor.framework, we just pass PSCI calls straight on to the QEMU emulation
+of it. That means, if TCG is compatible with PSCI 0.2, so are we. Let's transpose
+that fact in code too.
+
+Signed-off-by: Alexander Graf <agraf@csgraf.de>
+Reviewed-by: Roman Bolshakov <r.bolshakov@yadro.com>
+Reviewed-by: Peter Maydell <peter.maydell@linaro.org>
+
+---
+
+v3 -> v4:
+
+  - Combine both if statements
+---
+ target/arm/cpu.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/target/arm/cpu.c b/target/arm/cpu.c
+index 0dd623e590..8c28759604 100644
+--- a/target/arm/cpu.c
++++ b/target/arm/cpu.c
+@@ -1079,8 +1079,8 @@ static void arm_cpu_initfn(Object *obj)
+     cpu->psci_version = 1; /* By default assume PSCI v0.1 */
+     cpu->kvm_target = QEMU_KVM_ARM_TARGET_NONE;
+ 
+-    if (tcg_enabled()) {
+-        cpu->psci_version = 2; /* TCG implements PSCI 0.2 */
++    if (tcg_enabled() || hvf_enabled()) {
++        cpu->psci_version = 2; /* TCG and HVF implement PSCI 0.2 */
+     }
+ }
+ 

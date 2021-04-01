@@ -1,0 +1,58 @@
+From 802d12a2c33fde0a59ae990300bcb847824bbb29 Mon Sep 17 00:00:00 2001
+From: Alexander Graf <agraf@csgraf.de>
+Date: Wed, 10 Feb 2021 22:19:58 +0100
+Subject: [PATCH 09/21] hvf: Make synchronize functions static
+
+The hvf accel synchronize functions are only used as input for local
+callback functions, so we can make them static.
+
+Signed-off-by: Alexander Graf <agraf@csgraf.de>
+---
+ accel/hvf/hvf-accel-ops.c | 6 +++---
+ accel/hvf/hvf-accel-ops.h | 3 ---
+ 2 files changed, 3 insertions(+), 6 deletions(-)
+
+diff --git a/accel/hvf/hvf-accel-ops.c b/accel/hvf/hvf-accel-ops.c
+index 3b599ac57c..69741ce708 100644
+--- a/accel/hvf/hvf-accel-ops.c
++++ b/accel/hvf/hvf-accel-ops.c
+@@ -214,7 +214,7 @@ static void do_hvf_cpu_synchronize_post_reset(CPUState *cpu,
+     cpu->vcpu_dirty = false;
+ }
+ 
+-void hvf_cpu_synchronize_post_reset(CPUState *cpu)
++static void hvf_cpu_synchronize_post_reset(CPUState *cpu)
+ {
+     run_on_cpu(cpu, do_hvf_cpu_synchronize_post_reset, RUN_ON_CPU_NULL);
+ }
+@@ -226,7 +226,7 @@ static void do_hvf_cpu_synchronize_post_init(CPUState *cpu,
+     cpu->vcpu_dirty = false;
+ }
+ 
+-void hvf_cpu_synchronize_post_init(CPUState *cpu)
++static void hvf_cpu_synchronize_post_init(CPUState *cpu)
+ {
+     run_on_cpu(cpu, do_hvf_cpu_synchronize_post_init, RUN_ON_CPU_NULL);
+ }
+@@ -237,7 +237,7 @@ static void do_hvf_cpu_synchronize_pre_loadvm(CPUState *cpu,
+     cpu->vcpu_dirty = true;
+ }
+ 
+-void hvf_cpu_synchronize_pre_loadvm(CPUState *cpu)
++static void hvf_cpu_synchronize_pre_loadvm(CPUState *cpu)
+ {
+     run_on_cpu(cpu, do_hvf_cpu_synchronize_pre_loadvm, RUN_ON_CPU_NULL);
+ }
+diff --git a/accel/hvf/hvf-accel-ops.h b/accel/hvf/hvf-accel-ops.h
+index f6192b56f0..018a4e22f6 100644
+--- a/accel/hvf/hvf-accel-ops.h
++++ b/accel/hvf/hvf-accel-ops.h
+@@ -13,8 +13,5 @@
+ #include "sysemu/cpus.h"
+ 
+ int hvf_vcpu_exec(CPUState *);
+-void hvf_cpu_synchronize_post_reset(CPUState *);
+-void hvf_cpu_synchronize_post_init(CPUState *);
+-void hvf_cpu_synchronize_pre_loadvm(CPUState *);
+ 
+ #endif /* HVF_CPUS_H */

@@ -3,7 +3,7 @@
 {
   home.sessionPath = [ "/Applications/Visual Studio Code - Insiders.app/Contents/Resources/app/bin" ];
 
-  home.packages = [ pkgs.qemu ];
+  home.packages = [ pkgs.qemu6 ];
 
   programs.git = {
     enable = true;
@@ -36,6 +36,7 @@
       };
 
       "nixserve" = {
+        hostname = "192.168.1.1";
         forwardAgent = true;
       };
 

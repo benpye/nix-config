@@ -2,6 +2,7 @@
 
 with lib;
 
+# Hack to allow use of the same services config options for launchd.
 {
   options = {
     systemd.user = {

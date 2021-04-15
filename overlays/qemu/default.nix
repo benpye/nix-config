@@ -1,13 +1,13 @@
 self: super:
 {
-  qemu = super.qemu.overrideAttrs (oldAttrs: rec {
+  qemu6 = super.qemu.overrideAttrs (oldAttrs: rec {
     version = "6.0.0-rc1";
 
     src = super.fetchurl {
       url= "https://download.qemu.org/qemu-${version}.tar.xz";
       sha256 = "sha256-BCDFl81zMep5er0jKvBK9HdAyOkJX5+eq/EJRBeF7r8=";
     };
-
+  } // (super.lib.optionalAttrs (super.pkgs.stdenv.isDarwin && super.pkgs.stdenv.isAarch64)) rec {
     patches = oldAttrs.patches ++ [
       ./patches/0001-hvf-Move-assert_hvf_ok-into-common-directory.patch
       ./patches/0002-hvf-Move-vcpu-thread-functions-into-common-directory.patch
@@ -32,6 +32,7 @@ self: super:
       ./patches/0021-net-macos-implement-vmnet-based-netdev.patch
     ];
 
+    # Required for vmnet patch set.
     buildInputs = oldAttrs.buildInputs ++ [
       super.darwin.apple_sdk.frameworks.vmnet
     ];

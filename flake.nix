@@ -10,22 +10,19 @@
     nixpkgs-2009.url = "github:nixos/nixpkgs/release-20.09";
     nixos-2009.url = "github:nixos/nixpkgs/nixos-20.09";
 
-    # Darwin aarch64 channel
-    nixpkgs-darwin-aarch64.url = "github:thefloweringash/nixpkgs/apple-silicon";
-
-    home-manager-darwin-aarch64 = {
+    home-manager = {
       url = "github:nix-community/home-manager";
-      inputs.nixpkgs.follows = "nixpkgs-darwin-aarch64";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     launchd_shim = {
       url = "github:benpye/launchd_shim";
-      inputs.nixpkgs.follows = "nixpkgs-darwin-aarch64";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # deploy-rs on unstable
     deploy-rs = {
-      url = "github:serokell/deploy-rs";
+      url = "github:benpye/deploy-rs/add-aarch64-darwin";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -46,8 +43,9 @@
 
     homeConfigurations = lib.mkHomeConfigurations {
       m1pro = {
-        home-manager = inputs.home-manager-darwin-aarch64;
+        home-manager = inputs.home-manager;
         system = "aarch64-darwin";
+        stateVersion = "21.05";
         username = "benpye";
         homeDirectory = "/Users/benpye";
         overlays = [ inputs.launchd_shim.overlay ];
@@ -62,6 +60,11 @@
           (self: super: { unstable = inputs.nixpkgs.legacyPackages.x86_64-linux; })
         ];
       };
+
+      nixbuild = {
+        nixos = inputs.nixos-2009;
+        system = "x86_64-linux";
+      };
     };
 
     deploy = {
@@ -73,6 +76,16 @@
             sshUser = "ben";
             sshOpts = [ "-A" ];
             path = inputs.deploy-rs-2009.lib.x86_64-linux.activate.nixos self.nixosConfigurations.nixserve;
+          };
+        };
+
+        nixbuild = {
+          hostname = "nixbuild";
+          profiles.system = {
+            user = "root";
+            sshUser = "ben";
+            sshOpts = [ "-A" ];
+            path = inputs.deploy-rs-2009.lib.x86_64-linux.activate.nixos self.nixosConfigurations.nixbuild;
           };
         };
       };

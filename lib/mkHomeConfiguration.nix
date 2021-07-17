@@ -4,7 +4,8 @@
 , username
 , homeDirectory ? null
 , overlays ? []
-, imports ? [] }:
+, imports ? []
+, stateVersion }:
 
 let
   pkgs = home-manager.inputs.nixpkgs.outputs.legacyPackages.${system};
@@ -19,5 +20,5 @@ home-manager.lib.homeManagerConfiguration {
     imports = [ (../home + "/${name}") ] ++ (import ../hm { inherit pkgs; });
   };
   homeDirectory = homeDirectory';
-  inherit system username pkgs;
+  inherit system username pkgs stateVersion;
 }

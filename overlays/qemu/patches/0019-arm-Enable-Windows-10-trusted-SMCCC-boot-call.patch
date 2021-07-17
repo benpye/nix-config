@@ -1,0 +1,54 @@
+From 8d7131b47f33b763fa2f7e0f7dea56cf9f5a61bb Mon Sep 17 00:00:00 2001
+From: Alexander Graf <agraf@csgraf.de>
+Date: Sun, 16 May 2021 12:39:34 +0200
+Subject: [PATCH 19/21] arm: Enable Windows 10 trusted SMCCC boot call
+
+Windows 10 calls an SMCCC call via SMC unconditionally on boot. It lives
+in the trusted application call number space, but its purpose is unknown.
+
+In our current SMC implementation, we inject a UDEF for unknown SMC calls,
+including this one. However, Windows breaks on boot when we do this. Instead,
+let's return an error code.
+
+With this and -M virt,virtualization=on I can successfully boot the current
+Windows 10 Insider Preview in TCG.
+
+Signed-off-by: Alexander Graf <agraf@csgraf.de>
+---
+ target/arm/kvm-consts.h | 2 ++
+ target/arm/psci.c       | 2 ++
+ 2 files changed, 4 insertions(+)
+
+diff --git a/target/arm/kvm-consts.h b/target/arm/kvm-consts.h
+index 580f1c1fee..4b64f98117 100644
+--- a/target/arm/kvm-consts.h
++++ b/target/arm/kvm-consts.h
+@@ -85,6 +85,8 @@ MISMATCH_CHECK(QEMU_PSCI_0_2_FN64_CPU_SUSPEND, PSCI_0_2_FN64_CPU_SUSPEND);
+ MISMATCH_CHECK(QEMU_PSCI_0_2_FN64_CPU_ON, PSCI_0_2_FN64_CPU_ON);
+ MISMATCH_CHECK(QEMU_PSCI_0_2_FN64_MIGRATE, PSCI_0_2_FN64_MIGRATE);
+ 
++#define QEMU_SMCCC_TC_WINDOWS10_BOOT 0xc3000001
++
+ /* PSCI v0.2 return values used by TCG emulation of PSCI */
+ 
+ /* No Trusted OS migration to worry about when offlining CPUs */
+diff --git a/target/arm/psci.c b/target/arm/psci.c
+index 6709e28013..4d11dd59c4 100644
+--- a/target/arm/psci.c
++++ b/target/arm/psci.c
+@@ -69,6 +69,7 @@ bool arm_is_psci_call(ARMCPU *cpu, int excp_type)
+     case QEMU_PSCI_0_2_FN64_CPU_SUSPEND:
+     case QEMU_PSCI_0_1_FN_MIGRATE:
+     case QEMU_PSCI_0_2_FN_MIGRATE:
++    case QEMU_SMCCC_TC_WINDOWS10_BOOT:
+         return true;
+     default:
+         return false;
+@@ -194,6 +195,7 @@ void arm_handle_psci_call(ARMCPU *cpu)
+         break;
+     case QEMU_PSCI_0_1_FN_MIGRATE:
+     case QEMU_PSCI_0_2_FN_MIGRATE:
++    case QEMU_SMCCC_TC_WINDOWS10_BOOT:
+         ret = QEMU_PSCI_RET_NOT_SUPPORTED;
+         break;
+     default:

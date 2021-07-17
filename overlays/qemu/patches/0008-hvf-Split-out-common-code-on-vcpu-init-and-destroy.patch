@@ -1,7 +1,7 @@
-From fa8c184f36f9bc889c54c68faecb7d218609beb8 Mon Sep 17 00:00:00 2001
+From f48a50d32fef8dfa1b79e814a7aa9715c692bd7a Mon Sep 17 00:00:00 2001
 From: Alexander Graf <agraf@csgraf.de>
 Date: Wed, 10 Feb 2021 21:55:00 +0100
-Subject: [PATCH 07/21] hvf: Split out common code on vcpu init and destroy
+Subject: [PATCH 08/21] hvf: Split out common code on vcpu init and destroy
 
 Until now, Hypervisor.framework has only been available on x86_64 systems.
 With Apple Silicon shipping now, it extends its reach to aarch64. To

@@ -1,7 +1,7 @@
-From 802d12a2c33fde0a59ae990300bcb847824bbb29 Mon Sep 17 00:00:00 2001
+From a40e6f4a736fd07a2306471da664c16c4d613f02 Mon Sep 17 00:00:00 2001
 From: Alexander Graf <agraf@csgraf.de>
 Date: Wed, 10 Feb 2021 22:19:58 +0100
-Subject: [PATCH 09/21] hvf: Make synchronize functions static
+Subject: [PATCH 10/21] hvf: Make synchronize functions static
 
 The hvf accel synchronize functions are only used as input for local
 callback functions, so we can make them static.

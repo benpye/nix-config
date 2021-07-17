@@ -1,6 +1,6 @@
-From ea9cae44f37b50c6a4ca7127c8396d6da6bf88db Mon Sep 17 00:00:00 2001
+From 6953cd49f208313883d9032f6941d577f10bc6b1 Mon Sep 17 00:00:00 2001
 From: Phillip Tennen <phillip@axleos.com>
-Date: Thu, 18 Mar 2021 12:54:27 +0900
+Date: Thu, 8 Jul 2021 14:44:51 +0900
 Subject: [PATCH 21/21] net/macos: implement vmnet-based netdev
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -59,27 +59,28 @@ within an isolated network
 Note that this patch requires macOS 10.15 as a minimum, as this is when
 bridging support was implemented in vmnet.framework.
 
-Rebased to commit 571d413b5da6bc6f1c2aaca8484717642255ddb0 by Akihiko
+Rebased to commit 9aef0954195cc592e86846dbbe7f3c2c5603690a by Akihiko
 Odaki.
 
 Signed-off-by: Phillip Tennen <phillip@axleos.com>
 Signed-off-by: Akihiko Odaki <akihiko.odaki@gmail.com>
+Message-Id: <20210315103209.20870-1-akihiko.odaki@gmail.com>
 ---
  meson.build       |   3 +
  net/clients.h     |   5 +
  net/meson.build   |   1 +
  net/net.c         |   3 +
- net/vmnet-macos.c | 446 ++++++++++++++++++++++++++++++++++++++++++++++
+ net/vmnet-macos.c | 447 ++++++++++++++++++++++++++++++++++++++++++++++
  qapi/net.json     | 120 ++++++++++++-
  qemu-options.hx   |   9 +
- 7 files changed, 585 insertions(+), 2 deletions(-)
+ 7 files changed, 586 insertions(+), 2 deletions(-)
  create mode 100644 net/vmnet-macos.c
 
 diff --git a/meson.build b/meson.build
-index a26b46a644..8a9ed543dc 100644
+index 6ffbf4ab14..100b839a6d 100644
 --- a/meson.build
 +++ b/meson.build
-@@ -178,6 +178,7 @@ socket = []
+@@ -176,6 +176,7 @@ socket = []
  version_res = []
  coref = []
  iokit = []
@@ -87,7 +88,7 @@ index a26b46a644..8a9ed543dc 100644
  emulator_link_args = []
  hvf = not_found
  if targetos == 'windows'
-@@ -191,6 +192,7 @@ if targetos == 'windows'
+@@ -189,6 +190,7 @@ if targetos == 'windows'
  elif targetos == 'darwin'
    coref = dependency('appleframeworks', modules: 'CoreFoundation')
    iokit = dependency('appleframeworks', modules: 'IOKit')
@@ -95,7 +96,7 @@ index a26b46a644..8a9ed543dc 100644
  elif targetos == 'sunos'
    socket = [cc.find_library('socket'),
              cc.find_library('nsl'),
-@@ -1147,6 +1149,7 @@ config_host_data.set('CONFIG_FUSE', fuse.found())
+@@ -1145,6 +1147,7 @@ config_host_data.set('CONFIG_FUSE', fuse.found())
  config_host_data.set('CONFIG_FUSE_LSEEK', fuse_lseek.found())
  config_host_data.set('CONFIG_X11', x11.found())
  config_host_data.set('CONFIG_CFI', get_option('cfi'))
@@ -129,10 +130,10 @@ index 1076b0a7ab..ba6a5b7fa0 100644
  
  subdir('can')
 diff --git a/net/net.c b/net/net.c
-index 725a4e1450..7d0b507748 100644
+index edf9b95418..4db4e1fb7c 100644
 --- a/net/net.c
 +++ b/net/net.c
-@@ -1005,6 +1005,9 @@ static int (* const net_client_init_fun[NET_CLIENT_DRIVER__MAX])(
+@@ -1002,6 +1002,9 @@ static int (* const net_client_init_fun[NET_CLIENT_DRIVER__MAX])(
  #ifdef CONFIG_L2TPV3
          [NET_CLIENT_DRIVER_L2TPV3]    = net_init_l2tpv3,
  #endif
@@ -144,10 +145,10 @@ index 725a4e1450..7d0b507748 100644
  
 diff --git a/net/vmnet-macos.c b/net/vmnet-macos.c
 new file mode 100644
-index 0000000000..18d0430aca
+index 0000000000..062ba2091e
 --- /dev/null
 +++ b/net/vmnet-macos.c
-@@ -0,0 +1,446 @@
+@@ -0,0 +1,447 @@
 +/*
 + * vmnet.framework backed netdev for macOS 10.15+ hosts
 + *
@@ -584,18 +585,19 @@ index 0000000000..18d0430aca
 +
 +    /* Include DHCP info if we're in a relevant mode */
 +    if (vmnet_provides_dhcp_info) {
-+        nc->info_str = g_strdup_printf("dhcp_start=%s,dhcp_end=%s,mask=%s",
-+                                       vmnet_dhcp_range_start,
-+                                       vmnet_dhcp_range_end,
-+                                       vmnet_subnet_mask);
++        snprintf(nc->info_str, sizeof(nc->info_str),
++                 "dhcp_start=%s,dhcp_end=%s,mask=%s",
++                 vmnet_dhcp_range_start, vmnet_dhcp_range_end,
++                 vmnet_subnet_mask);
 +    } else {
-+        nc->info_str = g_strdup_printf("mac=%s", vmnet_mac_address);
++        snprintf(nc->info_str, sizeof(nc->info_str),
++                 "mac=%s", vmnet_mac_address);
 +    }
 +
 +    return 0;
 +}
 diff --git a/qapi/net.json b/qapi/net.json
-index b86d053ad6..3678ea0d9c 100644
+index af3f5b0fda..9eea41a113 100644
 --- a/qapi/net.json
 +++ b/qapi/net.json
 @@ -450,6 +450,115 @@

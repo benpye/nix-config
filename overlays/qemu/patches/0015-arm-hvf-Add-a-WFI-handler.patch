@@ -1,7 +1,7 @@
-From ec661c244458f17367ae345c8dd01e7b39d6f696 Mon Sep 17 00:00:00 2001
+From a25a48f49aa38dd1d7e2110362786f69146ef7fa Mon Sep 17 00:00:00 2001
 From: Peter Collingbourne <pcc@google.com>
 Date: Tue, 1 Dec 2020 20:44:07 -0800
-Subject: [PATCH 17/21] arm/hvf: Add a WFI handler
+Subject: [PATCH 15/21] arm/hvf: Add a WFI handler
 
 Sleep on WFI until the VTIMER is due but allow ourselves to be woken
 up on IPI.
@@ -17,14 +17,21 @@ Signed-off-by: Peter Collingbourne <pcc@google.com>
 [agraf: Remove unused 'set' variable, always advance PC on WFX trap]
 Signed-off-by: Alexander Graf <agraf@csgraf.de>
 Acked-by: Roman Bolshakov <r.bolshakov@yadro.com>
+
 ---
- accel/hvf/hvf-accel-ops.c |  5 ++--
+
+v6 -> v7:
+
+  - Move WFI into function
+  - Improve comment wording
+---
+ accel/hvf/hvf-accel-ops.c |  5 ++-
  include/sysemu/hvf_int.h  |  1 +
- target/arm/hvf/hvf.c      | 56 +++++++++++++++++++++++++++++++++++++++
- 3 files changed, 59 insertions(+), 3 deletions(-)
+ target/arm/hvf/hvf.c      | 68 +++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 71 insertions(+), 3 deletions(-)
 
 diff --git a/accel/hvf/hvf-accel-ops.c b/accel/hvf/hvf-accel-ops.c
-index 45ce92802b..67d7c5ee74 100644
+index 48e402ef57..63ec8a6f25 100644
 --- a/accel/hvf/hvf-accel-ops.c
 +++ b/accel/hvf/hvf-accel-ops.c
 @@ -369,15 +369,14 @@ static int hvf_init_vcpu(CPUState *cpu)
@@ -46,19 +53,19 @@ index 45ce92802b..67d7c5ee74 100644
  #ifdef __aarch64__
      r = hv_vcpu_create(&cpu->hvf->fd, (hv_vcpu_exit_t **)&cpu->hvf->exit, NULL);
 diff --git a/include/sysemu/hvf_int.h b/include/sysemu/hvf_int.h
-index b74c3bb142..d6165930d0 100644
+index e52d67ed5c..6d4eef8065 100644
 --- a/include/sysemu/hvf_int.h
 +++ b/include/sysemu/hvf_int.h
-@@ -50,6 +50,7 @@ extern HVFState *hvf_state;
- struct hvf_vcpu_state {
+@@ -51,6 +51,7 @@ struct hvf_vcpu_state {
      uint64_t fd;
      void *exit;
+     bool vtimer_masked;
 +    sigset_t unblock_ipi_mask;
  };
  
  void assert_hvf_ok(hv_return_t ret);
 diff --git a/target/arm/hvf/hvf.c b/target/arm/hvf/hvf.c
-index 40c8331ae4..b1f99bf8dd 100644
+index 3934c05979..67002efd36 100644
 --- a/target/arm/hvf/hvf.c
 +++ b/target/arm/hvf/hvf.c
 @@ -2,6 +2,7 @@
@@ -78,7 +85,7 @@ index 40c8331ae4..b1f99bf8dd 100644
  #include "exec/address-spaces.h"
  #include "hw/irq.h"
  #include "qemu/main-loop.h"
-@@ -452,6 +455,7 @@ int hvf_arch_init_vcpu(CPUState *cpu)
+@@ -457,6 +460,7 @@ int hvf_arch_init_vcpu(CPUState *cpu)
  
  void hvf_kick_vcpu_thread(CPUState *cpu)
  {
@@ -86,7 +93,7 @@ index 40c8331ae4..b1f99bf8dd 100644
      hv_vcpus_exit(&cpu->hvf->fd, 1);
  }
  
-@@ -514,6 +518,18 @@ static int hvf_inject_interrupts(CPUState *cpu)
+@@ -536,6 +540,67 @@ static int hvf_inject_interrupts(CPUState *cpu)
      return 0;
  }
  
@@ -102,52 +109,64 @@ index 40c8331ae4..b1f99bf8dd 100644
 +    qemu_mutex_lock_iothread();
 +}
 +
- int hvf_vcpu_exec(CPUState *cpu)
++static void hvf_wfi(CPUState *cpu)
++{
++    ARMCPU *arm_cpu = ARM_CPU(cpu);
++    hv_return_t r;
++    uint64_t ctl;
++
++    if (cpu->interrupt_request & (CPU_INTERRUPT_HARD | CPU_INTERRUPT_FIQ)) {
++        /* Interrupt pending, no need to wait */
++        return;
++    }
++
++    r = hv_vcpu_get_sys_reg(cpu->hvf->fd, HV_SYS_REG_CNTV_CTL_EL0,
++                            &ctl);
++    assert_hvf_ok(r);
++
++    if (!(ctl & 1) || (ctl & 2)) {
++        /* Timer disabled or masked, just wait for an IPI. */
++        hvf_wait_for_ipi(cpu, NULL);
++        return;
++    }
++
++    uint64_t cval;
++    r = hv_vcpu_get_sys_reg(cpu->hvf->fd, HV_SYS_REG_CNTV_CVAL_EL0,
++                            &cval);
++    assert_hvf_ok(r);
++
++    int64_t ticks_to_sleep = cval - mach_absolute_time();
++    if (ticks_to_sleep < 0) {
++        return;
++    }
++
++    uint64_t seconds = ticks_to_sleep / arm_cpu->gt_cntfrq_hz;
++    uint64_t nanos =
++        (ticks_to_sleep - arm_cpu->gt_cntfrq_hz * seconds) *
++        1000000000 / arm_cpu->gt_cntfrq_hz;
++
++    /*
++     * Don't sleep for less than the time a context switch would take,
++     * so that we can satisfy fast timer requests on the same CPU.
++     * Measurements on M1 show the sweet spot to be ~2ms.
++     */
++    if (!seconds && nanos < 2000000) {
++        return;
++    }
++
++    struct timespec ts = { seconds, nanos };
++    hvf_wait_for_ipi(cpu, &ts);
++}
++
+ static void hvf_sync_vtimer(CPUState *cpu)
  {
      ARMCPU *arm_cpu = ARM_CPU(cpu);
-@@ -629,6 +645,46 @@ int hvf_vcpu_exec(CPUState *cpu)
+@@ -670,6 +735,9 @@ int hvf_vcpu_exec(CPUState *cpu)
      }
      case EC_WFX_TRAP:
          advance_pc = true;
-+        if (!(syndrome & WFX_IS_WFE) && !(cpu->interrupt_request &
-+            (CPU_INTERRUPT_HARD | CPU_INTERRUPT_FIQ))) {
-+
-+            uint64_t ctl;
-+            r = hv_vcpu_get_sys_reg(cpu->hvf->fd, HV_SYS_REG_CNTV_CTL_EL0,
-+                                    &ctl);
-+            assert_hvf_ok(r);
-+
-+            if (!(ctl & 1) || (ctl & 2)) {
-+                /* Timer disabled or masked, just wait for an IPI. */
-+                hvf_wait_for_ipi(cpu, NULL);
-+                break;
-+            }
-+
-+            uint64_t cval;
-+            r = hv_vcpu_get_sys_reg(cpu->hvf->fd, HV_SYS_REG_CNTV_CVAL_EL0,
-+                                    &cval);
-+            assert_hvf_ok(r);
-+
-+            int64_t ticks_to_sleep = cval - mach_absolute_time();
-+            if (ticks_to_sleep < 0) {
-+                break;
-+            }
-+
-+            uint64_t seconds = ticks_to_sleep / arm_cpu->gt_cntfrq_hz;
-+            uint64_t nanos =
-+                (ticks_to_sleep - arm_cpu->gt_cntfrq_hz * seconds) *
-+                1000000000 / arm_cpu->gt_cntfrq_hz;
-+
-+            /*
-+             * Don't sleep for less than 2ms. This is believed to improve
-+             * latency of message passing workloads.
-+             */
-+            if (!seconds && nanos < 2000000) {
-+                break;
-+            }
-+
-+            struct timespec ts = { seconds, nanos };
-+            hvf_wait_for_ipi(cpu, &ts);
++        if (!(syndrome & WFX_IS_WFE)) {
++            hvf_wfi(cpu);
 +        }
          break;
      case EC_AA64_HVC:

@@ -1,0 +1,223 @@
+From f54fa06710c9bb846fb1584591c1b0de9c91d78b Mon Sep 17 00:00:00 2001
+From: Alexander Graf <agraf@csgraf.de>
+Date: Wed, 2 Dec 2020 19:45:43 +0100
+Subject: [PATCH 16/21] hvf: arm: Implement -cpu host
+
+Now that we have working system register sync, we push more target CPU
+properties into the virtual machine. That might be useful in some
+situations, but is not the typical case that users want.
+
+So let's add a -cpu host option that allows them to explicitly pass all
+CPU capabilities of their host CPU into the guest.
+
+Signed-off-by: Alexander Graf <agraf@csgraf.de>
+Acked-by: Roman Bolshakov <r.bolshakov@yadro.com>
+
+---
+
+v6 -> v7:
+
+  - Move function define to own header
+  - Do not propagate SVE features for HVF
+  - Remove stray whitespace change
+  - Verify that EL0 and EL1 do not allow AArch32 mode
+  - Only probe host CPU features once
+---
+ target/arm/cpu.c     |  9 ++++--
+ target/arm/cpu.h     |  2 ++
+ target/arm/hvf/hvf.c | 72 ++++++++++++++++++++++++++++++++++++++++++++
+ target/arm/hvf_arm.h | 19 ++++++++++++
+ target/arm/kvm_arm.h |  2 --
+ 5 files changed, 100 insertions(+), 4 deletions(-)
+ create mode 100644 target/arm/hvf_arm.h
+
+diff --git a/target/arm/cpu.c b/target/arm/cpu.c
+index 0dd623e590..1f8b75292d 100644
+--- a/target/arm/cpu.c
++++ b/target/arm/cpu.c
+@@ -40,6 +40,7 @@
+ #include "sysemu/tcg.h"
+ #include "sysemu/hw_accel.h"
+ #include "kvm_arm.h"
++#include "hvf_arm.h"
+ #include "disas/capstone.h"
+ #include "fpu/softfloat.h"
+ 
+@@ -1999,15 +2000,19 @@ static void arm_cpu_class_init(ObjectClass *oc, void *data)
+ #endif /* CONFIG_TCG */
+ }
+ 
+-#ifdef CONFIG_KVM
++#if defined(CONFIG_KVM) || defined(CONFIG_HVF)
+ static void arm_host_initfn(Object *obj)
+ {
+     ARMCPU *cpu = ARM_CPU(obj);
+ 
++#ifdef CONFIG_KVM
+     kvm_arm_set_cpu_features_from_host(cpu);
+     if (arm_feature(&cpu->env, ARM_FEATURE_AARCH64)) {
+         aarch64_add_sve_properties(obj);
+     }
++#else
++    hvf_arm_set_cpu_features_from_host(cpu);
++#endif
+     arm_cpu_post_init(obj);
+ }
+ 
+@@ -2067,7 +2072,7 @@ static void arm_cpu_register_types(void)
+ {
+     type_register_static(&arm_cpu_type_info);
+ 
+-#ifdef CONFIG_KVM
++#if defined(CONFIG_KVM) || defined(CONFIG_HVF)
+     type_register_static(&host_arm_cpu_type_info);
+ #endif
+ }
+diff --git a/target/arm/cpu.h b/target/arm/cpu.h
+index 193a49ec7f..1beddfc8b8 100644
+--- a/target/arm/cpu.h
++++ b/target/arm/cpu.h
+@@ -2972,6 +2972,8 @@ bool write_cpustate_to_list(ARMCPU *cpu, bool kvm_sync);
+ #define ARM_CPU_TYPE_NAME(name) (name ARM_CPU_TYPE_SUFFIX)
+ #define CPU_RESOLVING_TYPE TYPE_ARM_CPU
+ 
++#define TYPE_ARM_HOST_CPU "host-" TYPE_ARM_CPU
++
+ #define cpu_signal_handler cpu_arm_signal_handler
+ #define cpu_list arm_cpu_list
+ 
+diff --git a/target/arm/hvf/hvf.c b/target/arm/hvf/hvf.c
+index 67002efd36..bce46f3ed8 100644
+--- a/target/arm/hvf/hvf.c
++++ b/target/arm/hvf/hvf.c
+@@ -17,6 +17,7 @@
+ #include "sysemu/hvf.h"
+ #include "sysemu/hvf_int.h"
+ #include "sysemu/hw_accel.h"
++#include "hvf_arm.h"
+ 
+ #include <mach/mach_time.h>
+ 
+@@ -44,6 +45,16 @@
+ #define TMR_CTL_IMASK   (1 << 1)
+ #define TMR_CTL_ISTATUS (1 << 2)
+ 
++typedef struct ARMHostCPUFeatures {
++    ARMISARegisters isar;
++    uint64_t features;
++    uint64_t midr;
++    uint32_t reset_sctlr;
++    const char *dtb_compatible;
++} ARMHostCPUFeatures;
++
++static ARMHostCPUFeatures arm_host_cpu_features;
++
+ struct hvf_reg_match {
+     int reg;
+     uint64_t offset;
+@@ -390,6 +401,67 @@ static uint64_t hvf_get_reg(CPUState *cpu, int rt)
+     return val;
+ }
+ 
++static void hvf_arm_get_host_cpu_features(ARMHostCPUFeatures *ahcf)
++{
++    ARMISARegisters host_isar;
++    const struct isar_regs {
++        int reg;
++        uint64_t *val;
++    } regs[] = {
++        { HV_SYS_REG_ID_AA64PFR0_EL1, &host_isar.id_aa64pfr0 },
++        { HV_SYS_REG_ID_AA64PFR1_EL1, &host_isar.id_aa64pfr1 },
++        { HV_SYS_REG_ID_AA64DFR0_EL1, &host_isar.id_aa64dfr0 },
++        { HV_SYS_REG_ID_AA64DFR1_EL1, &host_isar.id_aa64dfr1 },
++        { HV_SYS_REG_ID_AA64ISAR0_EL1, &host_isar.id_aa64isar0 },
++        { HV_SYS_REG_ID_AA64ISAR1_EL1, &host_isar.id_aa64isar1 },
++        { HV_SYS_REG_ID_AA64MMFR0_EL1, &host_isar.id_aa64mmfr0 },
++        { HV_SYS_REG_ID_AA64MMFR1_EL1, &host_isar.id_aa64mmfr1 },
++        { HV_SYS_REG_ID_AA64MMFR2_EL1, &host_isar.id_aa64mmfr2 },
++    };
++    hv_vcpu_t fd;
++    hv_vcpu_exit_t *exit;
++    int i;
++
++    ahcf->dtb_compatible = "arm,arm-v8";
++    ahcf->features = (1ULL << ARM_FEATURE_V8) |
++                     (1ULL << ARM_FEATURE_NEON) |
++                     (1ULL << ARM_FEATURE_AARCH64) |
++                     (1ULL << ARM_FEATURE_PMU) |
++                     (1ULL << ARM_FEATURE_GENERIC_TIMER);
++
++    /* We set up a small vcpu to extract host registers */
++
++    assert_hvf_ok(hv_vcpu_create(&fd, &exit, NULL));
++    for (i = 0; i < ARRAY_SIZE(regs); i++) {
++        assert_hvf_ok(hv_vcpu_get_sys_reg(fd, regs[i].reg, regs[i].val));
++    }
++    assert_hvf_ok(hv_vcpu_get_sys_reg(fd, HV_SYS_REG_MIDR_EL1, &ahcf->midr));
++    assert_hvf_ok(hv_vcpu_destroy(fd));
++
++    ahcf->isar = host_isar;
++    ahcf->reset_sctlr = 0x00c50078;
++
++    /* Make sure we don't advertise AArch32 support for EL0/EL1 */
++    g_assert((host_isar.id_aa64pfr0 & 0xff) == 0x11);
++}
++
++void hvf_arm_set_cpu_features_from_host(ARMCPU *cpu)
++{
++    if (!arm_host_cpu_features.dtb_compatible) {
++        if (!hvf_enabled()) {
++            cpu->host_cpu_probe_failed = true;
++            return;
++        }
++        hvf_arm_get_host_cpu_features(&arm_host_cpu_features);
++    }
++
++    cpu->dtb_compatible = arm_host_cpu_features.dtb_compatible;
++    cpu->isar = arm_host_cpu_features.isar;
++    cpu->env.features = arm_host_cpu_features.features;
++    cpu->midr = arm_host_cpu_features.midr;
++    cpu->reset_sctlr = arm_host_cpu_features.reset_sctlr;
++}
++
+ void hvf_arch_vcpu_destroy(CPUState *cpu)
+ {
+ }
+diff --git a/target/arm/hvf_arm.h b/target/arm/hvf_arm.h
+new file mode 100644
+index 0000000000..603074a331
+--- /dev/null
++++ b/target/arm/hvf_arm.h
+@@ -0,0 +1,19 @@
++/*
++ * QEMU Hypervisor.framework (HVF) support -- ARM specifics
++ *
++ * Copyright (c) 2021 Alexander Graf
++ *
++ * This work is licensed under the terms of the GNU GPL, version 2 or later.
++ * See the COPYING file in the top-level directory.
++ *
++ */
++
++#ifndef QEMU_HVF_ARM_H
++#define QEMU_HVF_ARM_H
++
++#include "qemu/accel.h"
++#include "cpu.h"
++
++void hvf_arm_set_cpu_features_from_host(struct ARMCPU *cpu);
++
++#endif
+diff --git a/target/arm/kvm_arm.h b/target/arm/kvm_arm.h
+index 34f8daa377..828dca4a4a 100644
+--- a/target/arm/kvm_arm.h
++++ b/target/arm/kvm_arm.h
+@@ -214,8 +214,6 @@ bool kvm_arm_create_scratch_host_vcpu(const uint32_t *cpus_to_try,
+  */
+ void kvm_arm_destroy_scratch_host_vcpu(int *fdarray);
+ 
+-#define TYPE_ARM_HOST_CPU "host-" TYPE_ARM_CPU
+-
+ /**
+  * ARMHostCPUFeatures: information about the host CPU (identified
+  * by asking the host kernel)

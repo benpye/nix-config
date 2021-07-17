@@ -1,7 +1,7 @@
-From 1de38f05460646953878d2e50fdc1fa79997efaf Mon Sep 17 00:00:00 2001
+From 5ecc9063b8a2202842f8b96a3486173846e1f0df Mon Sep 17 00:00:00 2001
 From: Alexander Graf <agraf@csgraf.de>
 Date: Thu, 26 Nov 2020 01:44:20 +0100
-Subject: [PATCH 16/21] arm: Add Hypervisor.framework build target
+Subject: [PATCH 18/21] arm: Add Hypervisor.framework build target
 
 Now that we have all logic in place that we need to handle Hypervisor.framework
 on Apple Silicon systems, let's add CONFIG_HVF for aarch64 as well so that we
@@ -20,44 +20,35 @@ v1 -> v2:
 v3 -> v4:
 
   - Remove i386-softmmu target
+
+v6 -> v7:
+
+  - Simplify HVF matching logic in meson build file
 ---
- meson.build                | 11 ++++++++++-
- target/arm/hvf/meson.build |  3 +++
- target/arm/meson.build     |  2 ++
- 3 files changed, 15 insertions(+), 1 deletion(-)
+ meson.build                | 7 +++++++
+ target/arm/hvf/meson.build | 3 +++
+ target/arm/meson.build     | 2 ++
+ 3 files changed, 12 insertions(+)
  create mode 100644 target/arm/hvf/meson.build
 
 diff --git a/meson.build b/meson.build
-index 93a293849d..a26b46a644 100644
+index a49a72111a..6ffbf4ab14 100644
 --- a/meson.build
 +++ b/meson.build
-@@ -77,16 +77,25 @@ else
+@@ -77,6 +77,13 @@ else
  endif
  
  accelerator_targets = { 'CONFIG_KVM': kvm_targets }
 +
-+if cpu in ['x86', 'x86_64']
-+  hvf_targets = ['x86_64-softmmu']
-+elif cpu in ['aarch64']
-+  hvf_targets = ['aarch64-softmmu']
-+else
-+  hvf_targets = []
++if cpu in ['aarch64']
++  accelerator_targets += {
++    'CONFIG_HVF': ['aarch64-softmmu']
++  }
 +endif
 +
  if cpu in ['x86', 'x86_64', 'arm', 'aarch64']
    # i368 emulator provides xenpv machine type for multiple architectures
    accelerator_targets += {
-     'CONFIG_XEN': ['i386-softmmu', 'x86_64-softmmu'],
-+    'CONFIG_HVF': hvf_targets,
-   }
- endif
- if cpu in ['x86', 'x86_64']
-   accelerator_targets += {
-     'CONFIG_HAX': ['i386-softmmu', 'x86_64-softmmu'],
--    'CONFIG_HVF': ['x86_64-softmmu'],
-     'CONFIG_WHPX': ['i386-softmmu', 'x86_64-softmmu'],
-   }
- endif
 diff --git a/target/arm/hvf/meson.build b/target/arm/hvf/meson.build
 new file mode 100644
 index 0000000000..855e6cce5a

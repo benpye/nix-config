@@ -1,7 +1,7 @@
-From 73e853162bfb6141009120c9c321f3dea99eaf40 Mon Sep 17 00:00:00 2001
+From 115c1ed06d0fb46b15c96e609be9389ab08cee19 Mon Sep 17 00:00:00 2001
 From: Alexander Graf <agraf@csgraf.de>
 Date: Wed, 10 Feb 2021 21:42:03 +0100
-Subject: [PATCH 06/21] hvf: Remove use of hv_uvaddr_t and hv_gpaddr_t
+Subject: [PATCH 07/21] hvf: Remove use of hv_uvaddr_t and hv_gpaddr_t
 
 The ARM version of Hypervisor.framework no longer defines these two
 types, so let's just revert to standard ones.

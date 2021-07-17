@@ -1,7 +1,7 @@
-From 55207cc35355a31bacf6eb534f59a25031ceac13 Mon Sep 17 00:00:00 2001
+From 2f477aa0e624716d5ff66a3d51b5d74cb11375d7 Mon Sep 17 00:00:00 2001
 From: Alexander Graf <agraf@csgraf.de>
 Date: Wed, 10 Feb 2021 21:38:02 +0100
-Subject: [PATCH 05/21] hvf: Make hvf_set_phys_mem() static
+Subject: [PATCH 06/21] hvf: Make hvf_set_phys_mem() static
 
 The hvf_set_phys_mem() function is only called within the same file.
 Make it static.

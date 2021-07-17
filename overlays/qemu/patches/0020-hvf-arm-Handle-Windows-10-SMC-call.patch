@@ -1,0 +1,41 @@
+From e040086fe16a6fe3a25c98826ba9f063b5f7cf34 Mon Sep 17 00:00:00 2001
+From: Alexander Graf <agraf@csgraf.de>
+Date: Sun, 16 May 2021 00:07:59 +0200
+Subject: [PATCH 20/21] hvf: arm: Handle Windows 10 SMC call
+
+Windows 10 calls an SMCCC call via SMC unconditionally on boot. It lives
+in the trusted application call number space, but its purpose is unknown.
+
+In our current SMC implementation, we inject a UDEF for unknown SMC calls,
+including this one. However, Windows breaks on boot when we do this. Instead,
+let's return an error code.
+
+With this patch applied I can successfully boot the current Windows 10
+Insider Preview in HVF.
+
+Signed-off-by: Alexander Graf <agraf@csgraf.de>
+
+---
+
+v7 -> v8:
+
+  - fix checkpatch
+---
+ target/arm/hvf/hvf.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/target/arm/hvf/hvf.c b/target/arm/hvf/hvf.c
+index 65c33e2a14..be670af578 100644
+--- a/target/arm/hvf/hvf.c
++++ b/target/arm/hvf/hvf.c
+@@ -931,6 +931,10 @@ int hvf_vcpu_exec(CPUState *cpu)
+         cpu_synchronize_state(cpu);
+         if (!hvf_handle_psci_call(cpu)) {
+             advance_pc = true;
++        } else if (env->xregs[0] == QEMU_SMCCC_TC_WINDOWS10_BOOT) {
++            /* This special SMC is called by Windows 10 on boot. Return error */
++            env->xregs[0] = -1;
++            advance_pc = true;
+         } else {
+             trace_hvf_unknown_smc(env->xregs[0]);
+             hvf_raise_exception(env, EXCP_UDEF, syn_uncategorized());

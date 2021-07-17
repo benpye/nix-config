@@ -1,7 +1,7 @@
-From ea0c13a2293e0bd7d8a9dd0a71f05d5abcd4a2c6 Mon Sep 17 00:00:00 2001
+From 7813f7ae849b9a2bd8b0a90732e820dde5c5f862 Mon Sep 17 00:00:00 2001
 From: Alexander Graf <agraf@csgraf.de>
 Date: Wed, 10 Feb 2021 21:31:10 +0100
-Subject: [PATCH 04/21] hvf: Move hvf internal definitions into common header
+Subject: [PATCH 05/21] hvf: Move hvf internal definitions into common header
 
 Until now, Hypervisor.framework has only been available on x86_64 systems.
 With Apple Silicon shipping now, it extends its reach to aarch64. To

@@ -1,7 +1,7 @@
-From ccf94a2b025703928b55ce7ec6cb2cf6cf2d6744 Mon Sep 17 00:00:00 2001
+From 93d5b8c4e237df796edd6af68230ad36cc58c25e Mon Sep 17 00:00:00 2001
 From: Alexander Graf <agraf@csgraf.de>
 Date: Mon, 30 Nov 2020 02:01:30 +0100
-Subject: [PATCH 11/21] hvf: Introduce hvf vcpu struct
+Subject: [PATCH 12/21] hvf: Introduce hvf vcpu struct
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -24,7 +24,7 @@ v4 -> v5:
  accel/hvf/hvf-accel-ops.c   |   8 +-
  include/hw/core/cpu.h       |   3 +-
  include/sysemu/hvf_int.h    |   4 +
- target/i386/hvf/hvf.c       | 102 +++++++++---------
+ target/i386/hvf/hvf.c       | 104 +++++++++---------
  target/i386/hvf/vmx.h       |  24 +++--
  target/i386/hvf/x86.c       |  28 ++---
  target/i386/hvf/x86_descr.c |  26 ++---
@@ -32,7 +32,7 @@ v4 -> v5:
  target/i386/hvf/x86_mmu.c   |   4 +-
  target/i386/hvf/x86_task.c  |  12 +--
  target/i386/hvf/x86hvf.c    | 210 ++++++++++++++++++------------------
- 11 files changed, 247 insertions(+), 236 deletions(-)
+ 11 files changed, 248 insertions(+), 237 deletions(-)
 
 diff --git a/accel/hvf/hvf-accel-ops.c b/accel/hvf/hvf-accel-ops.c
 index 14fc49791e..ded918c443 100644
@@ -106,7 +106,7 @@ index fd1dcaf26e..8b66a4e7d0 100644
  int hvf_arch_init_vcpu(CPUState *cpu);
  void hvf_arch_vcpu_destroy(CPUState *cpu);
 diff --git a/target/i386/hvf/hvf.c b/target/i386/hvf/hvf.c
-index e985967b89..3ef81f7aee 100644
+index e985967b89..be21ce4db1 100644
 --- a/target/i386/hvf/hvf.c
 +++ b/target/i386/hvf/hvf.c
 @@ -81,11 +81,11 @@ void vmx_update_tpr(CPUState *cpu)
@@ -261,7 +261,7 @@ index e985967b89..3ef81f7aee 100644
                  hvf_handle_io(env, port, &RAX(env), 1, size, 1);
                  macvm_set_rip(cpu, rip + ins_len);
                  break;
-@@ -514,10 +514,10 @@ int hvf_vcpu_exec(CPUState *cpu)
+@@ -514,21 +514,21 @@ int hvf_vcpu_exec(CPUState *cpu)
              break;
          }
          case EXIT_REASON_CPUID: {
@@ -276,7 +276,8 @@ index e985967b89..3ef81f7aee 100644
  
              if (rax == 1) {
                  /* CPUID1.ecx.OSXSAVE needs to know CR4 */
-@@ -525,10 +525,10 @@ int hvf_vcpu_exec(CPUState *cpu)
+-                env->cr[4] = rvmcs(cpu->hvf_fd, VMCS_GUEST_CR4);
++                env->cr[4] = rvmcs(cpu->hvf->fd, VMCS_GUEST_CR4);
              }
              hvf_cpu_x86_cpuid(env, rax, rcx, &rax, &rbx, &rcx, &rdx);
  
@@ -761,10 +762,10 @@ index d66dfd7669..422156128b 100644
 +    hv_vcpu_flush(cpu->hvf->fd);
  }
 diff --git a/target/i386/hvf/x86hvf.c b/target/i386/hvf/x86hvf.c
-index 437c246bc1..c9febae7c8 100644
+index cc381307ab..28cfee4f60 100644
 --- a/target/i386/hvf/x86hvf.c
 +++ b/target/i386/hvf/x86hvf.c
-@@ -79,7 +79,7 @@ void hvf_put_xsave(CPUState *cpu_state)
+@@ -80,7 +80,7 @@ void hvf_put_xsave(CPUState *cpu_state)
  
      x86_cpu_xsave_all_areas(X86_CPU(cpu_state), xsave);
  
@@ -773,7 +774,7 @@ index 437c246bc1..c9febae7c8 100644
          abort();
      }
  }
-@@ -89,19 +89,19 @@ void hvf_put_segments(CPUState *cpu_state)
+@@ -90,19 +90,19 @@ void hvf_put_segments(CPUState *cpu_state)
      CPUX86State *env = &X86_CPU(cpu_state)->env;
      struct vmx_segment seg;
      
@@ -802,7 +803,7 @@ index 437c246bc1..c9febae7c8 100644
  
      hvf_set_segment(cpu_state, &seg, &env->segs[R_CS], false);
      vmx_write_segment_descriptor(cpu_state, &seg, R_CS);
-@@ -127,31 +127,31 @@ void hvf_put_segments(CPUState *cpu_state)
+@@ -128,31 +128,31 @@ void hvf_put_segments(CPUState *cpu_state)
      hvf_set_segment(cpu_state, &seg, &env->ldt, false);
      vmx_write_segment_descriptor(cpu_state, &seg, R_LDTR);
      
@@ -845,7 +846,7 @@ index 437c246bc1..c9febae7c8 100644
  }
  
  
-@@ -161,7 +161,7 @@ void hvf_get_xsave(CPUState *cpu_state)
+@@ -162,7 +162,7 @@ void hvf_get_xsave(CPUState *cpu_state)
  
      xsave = X86_CPU(cpu_state)->env.xsave_buf;
  
@@ -854,7 +855,7 @@ index 437c246bc1..c9febae7c8 100644
          abort();
      }
  
-@@ -200,17 +200,17 @@ void hvf_get_segments(CPUState *cpu_state)
+@@ -201,17 +201,17 @@ void hvf_get_segments(CPUState *cpu_state)
      vmx_read_segment_descriptor(cpu_state, &seg, R_LDTR);
      hvf_get_segment(&env->ldt, &seg);
  
@@ -880,7 +881,7 @@ index 437c246bc1..c9febae7c8 100644
  }
  
  void hvf_get_msrs(CPUState *cpu_state)
-@@ -218,27 +218,27 @@ void hvf_get_msrs(CPUState *cpu_state)
+@@ -219,27 +219,27 @@ void hvf_get_msrs(CPUState *cpu_state)
      CPUX86State *env = &X86_CPU(cpu_state)->env;
      uint64_t tmp;
      
@@ -918,7 +919,7 @@ index 437c246bc1..c9febae7c8 100644
  }
  
  int hvf_put_registers(CPUState *cpu_state)
-@@ -246,26 +246,26 @@ int hvf_put_registers(CPUState *cpu_state)
+@@ -247,26 +247,26 @@ int hvf_put_registers(CPUState *cpu_state)
      X86CPU *x86cpu = X86_CPU(cpu_state);
      CPUX86State *env = &x86cpu->env;
  
@@ -964,7 +965,7 @@ index 437c246bc1..c9febae7c8 100644
      
      hvf_put_xsave(cpu_state);
      
-@@ -273,14 +273,14 @@ int hvf_put_registers(CPUState *cpu_state)
+@@ -274,14 +274,14 @@ int hvf_put_registers(CPUState *cpu_state)
      
      hvf_put_msrs(cpu_state);
      
@@ -987,7 +988,7 @@ index 437c246bc1..c9febae7c8 100644
      
      return 0;
  }
-@@ -290,40 +290,40 @@ int hvf_get_registers(CPUState *cpu_state)
+@@ -291,40 +291,40 @@ int hvf_get_registers(CPUState *cpu_state)
      X86CPU *x86cpu = X86_CPU(cpu_state);
      CPUX86State *env = &x86cpu->env;
  
@@ -1055,7 +1056,7 @@ index 437c246bc1..c9febae7c8 100644
      
      x86_update_hflags(env);
      return 0;
-@@ -332,16 +332,16 @@ int hvf_get_registers(CPUState *cpu_state)
+@@ -333,16 +333,16 @@ int hvf_get_registers(CPUState *cpu_state)
  static void vmx_set_int_window_exiting(CPUState *cpu)
  {
       uint64_t val;
@@ -1076,7 +1077,7 @@ index 437c246bc1..c9febae7c8 100644
               ~VMCS_PRI_PROC_BASED_CTLS_INT_WINDOW_EXITING);
  }
  
-@@ -377,7 +377,7 @@ bool hvf_inject_interrupts(CPUState *cpu_state)
+@@ -378,7 +378,7 @@ bool hvf_inject_interrupts(CPUState *cpu_state)
      uint64_t info = 0;
      if (have_event) {
          info = vector | intr_type | VMCS_INTR_VALID;
@@ -1085,7 +1086,7 @@ index 437c246bc1..c9febae7c8 100644
          if (env->nmi_injected && reason != EXIT_REASON_TASK_SWITCH) {
              vmx_clear_nmi_blocking(cpu_state);
          }
-@@ -386,17 +386,17 @@ bool hvf_inject_interrupts(CPUState *cpu_state)
+@@ -387,17 +387,17 @@ bool hvf_inject_interrupts(CPUState *cpu_state)
              info &= ~(1 << 12); /* clear undefined bit */
              if (intr_type == VMCS_INTR_T_SWINTR ||
                  intr_type == VMCS_INTR_T_SWEXCEPTION) {
@@ -1106,7 +1107,7 @@ index 437c246bc1..c9febae7c8 100644
          };
      }
  
-@@ -404,7 +404,7 @@ bool hvf_inject_interrupts(CPUState *cpu_state)
+@@ -405,7 +405,7 @@ bool hvf_inject_interrupts(CPUState *cpu_state)
          if (!(env->hflags2 & HF2_NMI_MASK) && !(info & VMCS_INTR_VALID)) {
              cpu_state->interrupt_request &= ~CPU_INTERRUPT_NMI;
              info = VMCS_INTR_VALID | VMCS_INTR_T_NMI | EXCP02_NMI;
@@ -1115,7 +1116,7 @@ index 437c246bc1..c9febae7c8 100644
          } else {
              vmx_set_nmi_window_exiting(cpu_state);
          }
-@@ -416,7 +416,7 @@ bool hvf_inject_interrupts(CPUState *cpu_state)
+@@ -417,7 +417,7 @@ bool hvf_inject_interrupts(CPUState *cpu_state)
          int line = cpu_get_pic_interrupt(&x86cpu->env);
          cpu_state->interrupt_request &= ~CPU_INTERRUPT_HARD;
          if (line >= 0) {
@@ -1124,7 +1125,7 @@ index 437c246bc1..c9febae7c8 100644
                    VMCS_INTR_VALID | VMCS_INTR_T_HWINTR);
          }
      }
-@@ -432,7 +432,7 @@ int hvf_process_events(CPUState *cpu_state)
+@@ -433,7 +433,7 @@ int hvf_process_events(CPUState *cpu_state)
      X86CPU *cpu = X86_CPU(cpu_state);
      CPUX86State *env = &cpu->env;
  

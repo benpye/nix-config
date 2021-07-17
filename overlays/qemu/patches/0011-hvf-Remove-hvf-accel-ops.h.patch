@@ -1,7 +1,7 @@
-From d038e2049f03ef7b735da2d4d1e2d3895a80b379 Mon Sep 17 00:00:00 2001
+From cb81bbe1f1cd43a7f1aca7aaf3c7e5efad28cacd Mon Sep 17 00:00:00 2001
 From: Alexander Graf <agraf@csgraf.de>
 Date: Wed, 10 Feb 2021 22:22:43 +0100
-Subject: [PATCH 10/21] hvf: Remove hvf-accel-ops.h
+Subject: [PATCH 11/21] hvf: Remove hvf-accel-ops.h
 
 We can move the definition of hvf_vcpu_exec() into our internal
 hvf header, obsoleting the need for hvf-accel-ops.h.

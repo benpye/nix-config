@@ -1,4 +1,4 @@
-From 26cb4c64b7176bfebd7c953c7fdfa8efe73dc2f2 Mon Sep 17 00:00:00 2001
+From afd0dbecab29ee23f0fdc3cb507b00df80d32431 Mon Sep 17 00:00:00 2001
 From: Alexander Graf <agraf@csgraf.de>
 Date: Thu, 3 Dec 2020 15:15:04 +0100
 Subject: [PATCH 13/21] hvf: Simplify post reset/init/loadvm hooks
@@ -77,10 +77,10 @@ index ded918c443..d1691be989 100644
  
  static void hvf_set_dirty_tracking(MemoryRegionSection *section, bool on)
 diff --git a/target/i386/hvf/x86hvf.c b/target/i386/hvf/x86hvf.c
-index c9febae7c8..1af86e1e54 100644
+index 28cfee4f60..2ced2c2478 100644
 --- a/target/i386/hvf/x86hvf.c
 +++ b/target/i386/hvf/x86hvf.c
-@@ -432,7 +432,10 @@ int hvf_process_events(CPUState *cpu_state)
+@@ -433,7 +433,10 @@ int hvf_process_events(CPUState *cpu_state)
      X86CPU *cpu = X86_CPU(cpu_state);
      CPUX86State *env = &cpu->env;
  

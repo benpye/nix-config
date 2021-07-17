@@ -1,7 +1,7 @@
-From 33d1585ef889857352fb59a9c63c0ec866176322 Mon Sep 17 00:00:00 2001
+From 951e0d5c0429e2548a52f848b1d7a69c7bb727ba Mon Sep 17 00:00:00 2001
 From: Alexander Graf <agraf@csgraf.de>
 Date: Wed, 10 Feb 2021 21:10:21 +0100
-Subject: [PATCH 03/21] hvf: Move cpu functions into common directory
+Subject: [PATCH 04/21] hvf: Move cpu functions into common directory
 
 Until now, Hypervisor.framework has only been available on x86_64 systems.
 With Apple Silicon shipping now, it extends its reach to aarch64. To

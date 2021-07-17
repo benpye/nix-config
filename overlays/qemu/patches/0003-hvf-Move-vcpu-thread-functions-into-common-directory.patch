@@ -1,7 +1,7 @@
-From 5735f851b30d9fd0385da65d664da5e42e95d842 Mon Sep 17 00:00:00 2001
+From 439510c2878d3764403fcc5e8a0932320bfe0c81 Mon Sep 17 00:00:00 2001
 From: Alexander Graf <agraf@csgraf.de>
 Date: Wed, 10 Feb 2021 21:23:44 +0100
-Subject: [PATCH 02/21] hvf: Move vcpu thread functions into common directory
+Subject: [PATCH 03/21] hvf: Move vcpu thread functions into common directory
 
 Until now, Hypervisor.framework has only been available on x86_64 systems.
 With Apple Silicon shipping now, it extends its reach to aarch64. To

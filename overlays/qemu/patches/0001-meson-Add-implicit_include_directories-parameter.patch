@@ -1,0 +1,40 @@
+From cca8c648c30d6e1dc6261bf171a935133f5cfbf9 Mon Sep 17 00:00:00 2001
+From: Akihiko Odaki <akihiko.odaki@gmail.com>
+Date: Fri, 7 May 2021 21:27:20 +0900
+Subject: [PATCH 01/21] meson: Add implicit_include_directories parameter
+
+This fixes build failures with Xcode 12.5, which was released on April 26,
+2021. The Xcode release uses a C++ standard library header file named
+"version", for the standard library implementation. The standard library
+header file conflicts with the file named "VERSION" at the root of the
+source directory and makes the build of the "common" library fail.
+
+By explicitly specifying implicit_include_directories to false for
+the library, meson will no longer add the root of the source directory
+to the search path of angle bracket inclusions (#include <version>).
+
+The header files in the directory is still referencible because it is
+specified for quote inclusions (#include "qemu-options.h"). Such a
+conflict avoidance was the intention of the commit introducing quote
+inclusion path specifications (commit 9edc19c9
+"make: switch from -I to -iquote"). The commit also suggests that it
+would also help to "catch any future uses of #include <> for internal
+headers."
+
+Signed-off-by: Akihiko Odaki <akihiko.odaki@gmail.com>
+---
+ meson.build | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/meson.build b/meson.build
+index c6f4b0cf5e..2e013248a1 100644
+--- a/meson.build
++++ b/meson.build
+@@ -2130,6 +2130,7 @@ common_all = static_library('common',
+                             build_by_default: false,
+                             sources: common_all.sources() + genh,
+                             dependencies: common_all.dependencies(),
++                            implicit_include_directories: false,
+                             name_suffix: 'fa')
+ 
+ feature_to_c = find_program('scripts/feature_to_c.sh')

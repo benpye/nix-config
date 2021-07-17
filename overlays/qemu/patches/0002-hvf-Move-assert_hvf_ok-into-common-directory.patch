@@ -1,7 +1,7 @@
-From fc824a2614efe825a69dca71f47d60e830958dec Mon Sep 17 00:00:00 2001
+From fc0cd7cda258e4785cc665b167c1fead21260103 Mon Sep 17 00:00:00 2001
 From: Alexander Graf <agraf@csgraf.de>
 Date: Wed, 10 Feb 2021 20:50:20 +0100
-Subject: [PATCH 01/21] hvf: Move assert_hvf_ok() into common directory
+Subject: [PATCH 02/21] hvf: Move assert_hvf_ok() into common directory
 
 Until now, Hypervisor.framework has only been available on x86_64 systems.
 With Apple Silicon shipping now, it extends its reach to aarch64. To
@@ -24,10 +24,10 @@ Signed-off-by: Alexander Graf <agraf@csgraf.de>
  create mode 100644 include/sysemu/hvf_int.h
 
 diff --git a/MAINTAINERS b/MAINTAINERS
-index 554be84b32..5ce03c61cd 100644
+index 36055f14c5..275bfe1093 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -463,7 +463,15 @@ M: Roman Bolshakov <r.bolshakov@yadro.com>
+@@ -462,7 +462,15 @@ M: Roman Bolshakov <r.bolshakov@yadro.com>
  W: https://wiki.qemu.org/Features/HVF
  S: Maintained
  F: target/i386/hvf/

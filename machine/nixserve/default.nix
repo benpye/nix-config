@@ -201,7 +201,7 @@ in
     ruleset = ''
       table inet filter {
         flowtable f {
-          hook ingress priority filter; devices = { ${lib.concatStringsSep ", " ([ wanInterface.interface ] ++ lanInterfaceList)} };
+          hook ingress priority filter; devices = { ${lib.concatStringsSep ", " [ wanInterface.interface lanInterfaces.lan.interface ]} };
         }
 
         chain output {

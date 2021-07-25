@@ -50,7 +50,7 @@ in buildGoModule rec {
     cp vendor/go.mod ./
   '';
 
-  meta = with stdenv.lib; {
+  meta = with pkgs.lib; {
     homepage = https://caddyserver.com;
     description = "Fast, cross-platform HTTP/2 web server with automatic HTTPS";
     license = licenses.asl20;

@@ -40,6 +40,14 @@
         homeDirectory = "/Users/benpye";
         overlays = [ inputs.launchd_shim.overlay ];
       };
+
+      nixtop = {
+        home-manager = inputs.home-manager;
+        system = "x86_64-linux";
+        stateVersion = "21.11";
+        username = "ben";
+        homeDirectory = "/home/ben";
+      };
     };
 
     nixosConfigurations = lib.mkNixosConfigurations {
@@ -53,6 +61,11 @@
 
       nixbuild = {
         nixos = inputs.nixos-2009;
+        system = "x86_64-linux";
+      };
+
+      nixtop = {
+        nixos = inputs.nixos;
         system = "x86_64-linux";
       };
     };

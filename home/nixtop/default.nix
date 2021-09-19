@@ -19,15 +19,23 @@ let
     cyan =    "#2aa198";
     green =   "#859900";
   };
+
+  lockCmd = "${pkgs.i3lock}/bin/i3lock -n -c 000000";
 in
 {
   nixpkgs.config.allowUnfree = true;
 
   home.packages = [
-    pkgs.steam
     pkgs.discord
     pkgs.kicad-unstable
+    pkgs.cascadia-code
+    pkgs.inter
+    pkgs.i3lock
+    pkgs.font-awesome
+    pkgs.freecad
   ];
+
+  fonts.fontconfig.enable = true;
 
   programs.ncspot = {
     enable = true;
@@ -82,6 +90,9 @@ in
       "files.trimTrailingWhitespace" = "true";
       "window.titleBarStyle" = "custom";
       "window.menuBarVisibility" = "classic";
+      "editor.fontFamily" = "Cascadia Code";
+      "editor.inlayHints.fontFamily" = "Cascadia Code";
+      "markdown.preview.fontFamily" = "Inter";
     };
   };
 
@@ -133,7 +144,14 @@ in
   programs.alacritty = {
     enable = true;
     settings = {
-      background_opacity = 0.95;
+      background_opacity = 1.0;
+
+      font = {
+        normal = {
+          family = "Cascadia Code";
+        };
+        size = 11;
+      };
 
       window = {
         padding = {
@@ -173,17 +191,193 @@ in
     };
   };
 
+  programs.i3status-rust = {
+    enable = true;
+    bars =  {
+      default = {
+        blocks = [
+          {
+            block = "disk_space";
+            path = "/";
+            alias = "/";
+            info_type = "available";
+            unit = "GB";
+            interval = 60;
+            warning = 20.0;
+            alert = 10.0;
+          }
+          {
+            block = "memory";
+            display_type = "memory";
+            format_mem = "{mem_total_used_percents}";
+            format_swap = "{swap_used_percents}";
+          }
+          {
+            block = "cpu";
+            interval = 1;
+          }
+          {
+            block = "load";
+            format = "{1m}";
+            interval = 1;
+          }
+          {
+            block = "sound";
+            driver = "pulseaudio";
+          }
+          {
+            block = "time";
+            format = "%a %d/%m %R";
+            interval = 60;
+          }
+        ];
+        icons = "awesome5";
+        settings = {
+          theme = {
+            name = "solarized-light";
+            overrides = {
+              separator= " ";
+            };
+          };
+        };
+      };
+    };
+  };
+
   xsession = {
     enable = true;
+
     windowManager.i3 = {
       enable = true;
+
+      extraConfig = ''
+        title_align center
+      '';
+
       config = {
-        gaps = {
-          inner = 16;
-          outer = 0;
+        modifier = "Mod4";
+
+        colors = {
+          background = solarized.base3;
+
+          focused = {
+            background = solarized.blue;
+            border = solarized.blue;
+            # border = solarized.base1;
+            childBorder = solarized.base1;
+            indicator = solarized.blue;
+            text = solarized.base2;
+          };
+
+          focusedInactive = {
+            #  background = solarized.base2;
+            background = solarized.base2;
+            border = solarized.base2;
+            # border = solarized.magenta;
+            childBorder = solarized.base2;
+            # childBorder = solarized.magenta;
+            indicator = solarized.base2;
+            text = solarized.base01;
+          };
+
+          placeholder = {
+            background = "#0c0c0c";
+            border = "#000000";
+            childBorder = "#0c0c0c";
+            indicator = "#000000";
+            text = "#ffffff";
+          };
+
+          unfocused = {
+            # background = solarized.base3;
+            # border = solarized.base1;
+            # childBorder = solarized.base1;
+            background = solarized.base3;
+            border = solarized.base2;
+            childBorder = solarized.base2;
+            indicator = solarized.base2;
+            text = solarized.base00;
+          };
+
+          urgent = {
+            background = solarized.red;
+            border = solarized.red;
+            # border = solarized.base1;
+            childBorder = solarized.base1;
+            indicator = solarized.base1;
+            text = solarized.base2;
+          };
         };
+
+        window = {
+          hideEdgeBorders = "smart";
+        };
+
         terminal = "alacritty";
         menu = "\"rofi -modi combi -combi-modi drun,run -show combi\"";
+
+        fonts = {
+          names = [ "Inter" "Font Awesome 5 Free" ];
+          size = 11.0;
+        };
+
+        gaps = {
+          inner = 12;
+          outer = 0;
+        };
+
+        keybindings = let
+          mod = config.xsession.windowManager.i3.config.modifier;
+        in lib.mkOptionDefault {
+          "${mod}+l" = "exec ${lockCmd}";
+        };
+
+        bars = [{
+          mode = "dock";
+          hiddenState = "hide";
+          position = "top";
+          workspaceButtons = true;
+          workspaceNumbers = true;
+          statusCommand = "${pkgs.i3status-rust}/bin/i3status-rs ${config.xdg.configHome}/i3status-rust/config-default.toml";
+
+          fonts = {
+            names = [ "Inter" "Font Awesome 5 Free" ];
+            size = 11.0;
+          };
+
+          trayOutput = "primary";
+
+          colors = {
+            background = solarized.base3;
+            statusline = solarized.base00;
+            separator = solarized.base0;
+            focusedWorkspace = {
+              border = solarized.blue;
+              background = solarized.blue;
+              text = solarized.base2;
+            };
+            activeWorkspace = {
+              border = solarized.base2;
+              background = solarized.base2;
+              text = solarized.base01;
+            };
+            inactiveWorkspace = {
+              border = solarized.base3;
+              background = solarized.base3;
+              text = solarized.base00;
+            };
+            urgentWorkspace = {
+              border = solarized.red;
+              background = solarized.red;
+              text = solarized.base2;
+            };
+            bindingMode = {
+              border = solarized.base1;
+              background = solarized.yellow;
+              text = solarized.base2;
+            };
+          };
+        }];
       };
     };
   };
@@ -194,8 +388,19 @@ in
     experimentalBackends = true;
     shadow = true;
     vSync = true;
+    opacityRule = [
+      "80:class_g =   'i3bar'"
+      "90:class_g =   'Alacritty'"
+    ];
     extraOptions = ''
-      unredir-if-possible = true
+      unredir-if-possible = true;
+
+      blur:
+      {
+        method = "gaussian";
+        size = 20;
+        deviation = 10;
+      };
     '';
   };
 
@@ -204,29 +409,30 @@ in
     settings = {
       global = {
         follow = "mouse";
-        geometry = "480x5-0-19";
+        geometry = "480x5-16+40";
         transparency = 0;
-        padding = 16;
-        horizontal_padding = 16;
-        frame_width = 0;
-        seperator_color = "auto";
-        font = "Droid Sans Bold 12";
+        padding = 8;
+        horizontal_padding = 8;
+        frame_width = 2;
+        frame_color = solarized.base0;
+        seperator_color = solarized.base1;
+        font = "Inter 11";
       };
 
       urgency_low = {
-        background = solarized.base03;
-        foreground = solarized.base1;
+        background = solarized.base3;
+        foreground = solarized.base00;
         timeout = 10;
       };
 
       urgency_normal = {
-        background = solarized.base03;
-        foreground = solarized.base1;
+        background = solarized.base3;
+        foreground = solarized.base01;
         timeout = 10;
       };
 
       urgency_critical = {
-        background = solarized.base03;
+        background = solarized.base3;
         foreground = solarized.red;
         timeout = 0;
       };
@@ -257,6 +463,12 @@ in
     enable = true;
     interval = "1h";
     imageDirectory = "%h/backgrounds";
+  };
+
+  services.screen-locker = {
+    enable = true;
+    inactiveInterval = 5;
+    inherit lockCmd;
   };
 
   home.keyboard.layout = "gb";

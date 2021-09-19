@@ -4,7 +4,10 @@
   inputs = {
     # Unstable channels
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
-    nixos.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixos.url = "github:nixos/nixpkgs/9978f777fce61f6a053027d54388caed7ebb7a42";
+
+    # Steam FHS fix
+    steam-vulkan-fix-icd.url = "github:jonringer/nixpkgs/steam-vulkan-fix-icd";
 
     # Stable release channels
     nixpkgs-2009.url = "github:nixos/nixpkgs/release-20.09";

@@ -53,7 +53,9 @@
     desktopManager.xterm.enable = true;
   };
 
-  # ensure that 32-bit graphics libraries are available
+  hardware.nvidia.modesetting.enable = true;
+
+  # ensure that 32-bit graphics and audio libraries are available
   hardware.opengl.driSupport32Bit = true;
 
   # uk keyboard layout as above
@@ -61,13 +63,31 @@
 
   services.udev.packages = [ pkgs.yubikey-personalization ];
 
-  sound.enable = true;
-  hardware.pulseaudio.enable = true;
+  security.rtkit.enable = true;
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    alsa.support32Bit = true;
+    pulse.enable = true;
+
+    # use the example session manager (no others are packaged yet so this is enabled by default,
+    # no need to redefine it in your config for now)
+    #media-session.enable = true;
+  };
 
   users.users.ben = {
     isNormalUser = true;
     extraGroups = [ "wheel" ];
   };
+
+  environment.systemPackages = [
+    (pkgs.steam.override {
+      extraProfile = ''
+        unset VK_ICD_FILENAMES
+        export VK_ICD_FILENAMES=${config.hardware.nvidia.package}/share/vulkan/icd.d/nvidia_icd.json:${config.hardware.nvidia.package.lib32}/share/vulkan/icd.d/nvidia_icd32.json
+      '';
+    })
+  ];
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions

@@ -672,6 +672,23 @@ in
     };
   };
 
+  services.restic.backups = {
+    media = {
+      paths = [
+        "/tank/library/lightroom"
+        "/tank/library/photos"
+      ];
+      repository = "b2:benpye-backup:nixserve/media";
+      initialize = true;
+      passwordFile = "/etc/secrets/restic/media/repo";
+      s3CredentialsFile = "/etc/secrets/restic/media/b2_credentials";
+      pruneOpts = [
+        "--keep-daily 7"
+        "--keep-weekly 4"
+      ];
+    };
+  };
+
   users.users = {
     ben = {
       extraGroups = [ "wheel" "sharewriters" ];

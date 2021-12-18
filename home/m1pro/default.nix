@@ -3,7 +3,7 @@
 {
   home.sessionPath = [ "/Applications/Visual Studio Code - Insiders.app/Contents/Resources/app/bin" ];
 
-  home.packages = [ pkgs.qemu6 ];
+  home.packages = [ pkgs.qemu6 pkgs.arduino-cli pkgs.rustup ];
 
   programs.git = {
     enable = true;

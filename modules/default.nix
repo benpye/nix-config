@@ -7,7 +7,7 @@ let
   };
 
   modules = [
-    (loadModule ./services/caddy.nix { })
+    # (loadModule ./services/caddy.nix { })
     (loadModule ./services/matrix-ircd.nix {})
     (loadModule ./services/miniflux.nix { })
   ];

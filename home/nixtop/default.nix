@@ -26,13 +26,14 @@ in
   nixpkgs.config.allowUnfree = true;
 
   home.packages = [
-    pkgs.discord
     pkgs.kicad-unstable
     pkgs.cascadia-code
     pkgs.inter
     pkgs.i3lock
     pkgs.font-awesome
     pkgs.freecad
+    pkgs._7zz
+    pkgs.xilinx-ise
   ];
 
   fonts.fontconfig.enable = true;
@@ -104,6 +105,11 @@ in
     };
     userEmail = "ben@curlybracket.co.uk";
     userName = "Ben Pye";
+    extraConfig = {
+      init = {
+        defaultBranch = "main";
+      };
+    };
   };
 
   programs.go = {
@@ -133,7 +139,7 @@ in
   };
 
   programs.zsh = {
-    enable = true;
+   enable = true;
   };
 
   services.gpg-agent = {
@@ -314,7 +320,7 @@ in
         };
 
         terminal = "alacritty";
-        menu = "\"rofi -modi combi -combi-modi drun,run -show combi\"";
+        menu = "\"rofi -modi combi -combi-modi drun,run -show combi -show-icons\"";
 
         fonts = {
           names = [ "Inter" "Font Awesome 5 Free" ];
@@ -460,7 +466,7 @@ in
   };
 
   services.random-background = {
-    enable = true;
+#    enable = true;
     interval = "1h";
     imageDirectory = "%h/backgrounds";
   };
@@ -470,6 +476,40 @@ in
     inactiveInterval = 5;
     inherit lockCmd;
   };
+
+  # programs.foot = {
+  #   enable = true;
+  #   settings = {
+  #     main = {
+  #       font = "Cascadia Code:size=11";
+  #       dpi-aware = "yes";
+  #     };
+  #   };
+  # };
+
+  # wayland.windowManager.sway = {
+  #   enable = true;
+  #   config = {
+  #     modifier = "Mod4";
+
+  #     window = {
+  #       hideEdgeBorders = "smart";
+  #       titlebar = true;
+  #     };
+
+  #     terminal = "foot";
+
+  #     fonts = {
+  #       names = [ "Inter" "Font Awesome 5 Free" ];
+  #       size = 11.0;
+  #     };
+
+  #     gaps = {
+  #       inner = 12;
+  #       outer = 0;
+  #     };
+  #   };
+  # };
 
   home.keyboard.layout = "gb";
 

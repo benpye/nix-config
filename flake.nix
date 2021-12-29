@@ -4,10 +4,7 @@
   inputs = {
     # Unstable channels
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
-    nixos.url = "github:nixos/nixpkgs/9978f777fce61f6a053027d54388caed7ebb7a42";
-
-    # Steam FHS fix
-    steam-vulkan-fix-icd.url = "github:jonringer/nixpkgs/steam-vulkan-fix-icd";
+    nixos.url = "github:nixos/nixpkgs/nixos-unstable";
 
     # Stable release channels
     nixpkgs-2009.url = "github:nixos/nixpkgs/release-20.09";
@@ -15,6 +12,9 @@
 
     nixpkgs-2105.url = "github:nixos/nixpkgs/release-21.05";
     nixos-2105.url = "github:nixos/nixpkgs/nixos-21.05";
+
+    nixpkgs-2111.url = "github:nixos/nixpkgs/release-21.11";
+    nixos-2111.url = "github:nixos/nixpkgs/nixos-21.11";
 
     home-manager = {
       url = "github:nix-community/home-manager";
@@ -25,6 +25,8 @@
       url = "github:benpye/launchd_shim";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    nix-fpga-tools.url = "github:benpye/nix-fpga-tools";
 
     flake-utils.url = "github:benpye/flake-utils/add-aarch64-darwin-as-default";
   };
@@ -50,6 +52,7 @@
         stateVersion = "21.11";
         username = "ben";
         homeDirectory = "/home/ben";
+        overlays = [ inputs.nix-fpga-tools.overlay ];
       };
     };
 
@@ -68,7 +71,7 @@
       };
 
       nixtop = {
-        nixos = inputs.nixos;
+        nixos = inputs.nixos-2111;
         system = "x86_64-linux";
       };
     };

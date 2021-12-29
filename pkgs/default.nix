@@ -6,7 +6,6 @@ self: super:
     ];
     vendorSha256 = "1hdpfq072zfs7mvb0g60rsx7wm5jl12pyzryx8x4znww1m8b3flx";
   };
-
   matrix-ircd = super.callPackage ./matrix-ircd.nix {};
   ncspot = super.callPackage ./ncspot.nix {
     withMPRIS = super.stdenv.isLinux;

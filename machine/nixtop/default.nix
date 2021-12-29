@@ -18,6 +18,7 @@
   boot = {
     loader.systemd-boot.enable = true;
     loader.efi.canTouchEfiVariables = true;
+    supportedFilesystems = [ "zfs" ];
   };
 
   networking = {
@@ -42,11 +43,10 @@
     enable = true;
     videoDrivers = [ "nvidia" ];
     screenSection = ''
-      Option "metamodes" "DP-2: nvidia-auto-select +0+0 {AllowGSYNCCompatible=On}, DP-4: nvidia-auto-select +2560+0"
+      Option "metamodes" "HDMI-0: nvidia-auto-select +0+0 {AllowGSYNCCompatible=On}"
     '';
     xrandrHeads = [
-      "DP-2"
-      "DP-4"
+      "HDMI-0"
     ];
 
     # need to enable xterm so i3 can start from lightdm
@@ -75,19 +75,12 @@
     #media-session.enable = true;
   };
 
+  services.rpcbind.enable = true;
+
   users.users.ben = {
     isNormalUser = true;
     extraGroups = [ "wheel" ];
   };
-
-  environment.systemPackages = [
-    (pkgs.steam.override {
-      extraProfile = ''
-        unset VK_ICD_FILENAMES
-        export VK_ICD_FILENAMES=${config.hardware.nvidia.package}/share/vulkan/icd.d/nvidia_icd.json:${config.hardware.nvidia.package.lib32}/share/vulkan/icd.d/nvidia_icd32.json
-      '';
-    })
-  ];
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions

@@ -69,54 +69,82 @@ in
   security.pam.enableSSHAgentAuth = true;
   security.sudo.enable = true;
 
-  services.caddy = {
+  security.acme = {
+    email = "ben@curlybracket.co.uk";
+    acceptTerms = true;
+    certs = {
+      "benpye.uk" = {
+        extraDomainNames = [ "*.benpye.uk" ];
+        dnsProvider = "cloudflare";
+        credentialsFile = "/etc/secrets/acme.secret";
+        group = "nginx";
+      };
+    };
+  };
+
+  services.nginx = {
     enable = true;
-    package = pkgs.caddyExtra;
-    environmentFile = "/etc/secrets/caddy.secret";
-    config =
+
+    recommendedTlsSettings = true;
+    recommendedOptimisation = true;
+    recommendedGzipSettings = true;
+
+    recommendedProxySettings = true;
+
+    virtualHosts =
     let
-      common = ''
-        tls {
-          protocols tls1.2 tls1.3
-          ciphers TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384 TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256 TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
-        }
-
-        header {
-          Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
-          defer
-        }
-
-        encode gzip
+      extraConfig = ''
+        add_header 'Strict-Transport-Security' 'max-age=63072000; includeSubDomains; preload';
       '';
-    in
-    ''
-      {
-        email ben@curlybracket.co.uk
-        acme_dns cloudflare {env.CF_API_TOKEN}
-      }
+    in {
+      "bw.benpye.uk" = {
+        useACMEHost = "benpye.uk";
+        forceSSL = true;
 
-      bw.benpye.uk {
-        ${common}
+        locations = {
+          "/" = {
+            inherit extraConfig;
+            proxyPass = "http://localhost:8000";
+          };
 
-        reverse_proxy /notifications/hub http://localhost:3012
+          "/notifications/hub" = {
+            inherit extraConfig;
+            proxyPass = "http://localhost:3012";
+            proxyWebsockets = true;
+          };
 
-        reverse_proxy http://localhost:8000 {
-          header_up X-Real-IP {remote_host}
-        }
-      }
+          "/notifications/hub/negotiate" = {
+            inherit extraConfig;
+            proxyPass = "http://localhost:8000";
+          };
+        };
+      };
 
-      lounge.benpye.uk {
-        ${common}
+      "lounge.benpye.uk" = {
+        useACMEHost = "benpye.uk";
+        forceSSL = true;
 
-        reverse_proxy http://localhost:9000
-      }
+        locations = {
+          "/" = {
+            inherit extraConfig;
+            proxyPass = "http://localhost:9000";
+            proxyWebsockets = true;
+          };
+        };
+      };
 
-      miniflux.benpye.uk {
-        ${common}
+      "miniflux.benpye.uk" = {
+        useACMEHost = "benpye.uk";
+        forceSSL = true;
 
-        reverse_proxy http://localhost:9090
-      }
-      '';
+        locations = {
+          "/" = {
+            inherit extraConfig;
+            proxyPass = "http://localhost:9090";
+          };
+        };
+      };
+    };
   };
 
   services.avahi = {
@@ -158,7 +186,7 @@ in
     ensureDatabases = [ "bitwarden_rs" "miniflux2" ];
     ensureUsers = [
       {
-        name = "bitwarden_rs";
+        name = "vaultwarden";
         ensurePermissions = {
           "DATABASE bitwarden_rs" = "ALL PRIVILEGES";
         };
@@ -172,7 +200,7 @@ in
     ];
   };
 
-  services.bitwarden_rs = {
+  services.vaultwarden = {
     enable = true;
     dbBackend = "postgresql";
     config = {
@@ -285,7 +313,7 @@ in
       repository = "b2:benpye-backup:nixserve/media";
       initialize = true;
       passwordFile = "/etc/secrets/restic/media/repo";
-      s3CredentialsFile = "/etc/secrets/restic/media/b2_credentials";
+      environmentFile = "/etc/secrets/restic/media/b2_credentials";
       pruneOpts = [
         "--keep-daily 7"
         "--keep-weekly 4"
@@ -305,10 +333,7 @@ in
     };
   };
 
-  environment.systemPackages =
-    [
-      pkgs.nftables
-    ];
+  environment.systemPackages = [ ];
 
   users.groups = {
     share = {

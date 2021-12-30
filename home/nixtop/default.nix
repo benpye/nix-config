@@ -134,6 +134,7 @@ in
 
       "nixserve" = {
         forwardAgent = true;
+        hostname = "192.168.10.66";
       };
     };
   };

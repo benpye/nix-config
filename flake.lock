@@ -106,38 +106,6 @@
         "type": "github"
       }
     },
-    "nixos-2009": {
-      "locked": {
-        "lastModified": 1635350005,
-        "narHash": "sha256-tAMJnUwfaDEB2aa31jGcu7R7bzGELM9noc91L2PbVjg=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "1c1f5649bb9c1b0d98637c8c365228f57126f361",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nixos",
-        "ref": "nixos-20.09",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixos-2105": {
-      "locked": {
-        "lastModified": 1640283157,
-        "narHash": "sha256-6Ddfop+rKE+Gl9Tjp9YIrkfoYPzb8F80ergdjcq3/MY=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "dde1557825c5644c869c5efc7448dc03722a8f09",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nixos",
-        "ref": "nixos-21.05",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixos-2111": {
       "locked": {
         "lastModified": 1640572776,
@@ -167,38 +135,6 @@
         "id": "nixpkgs",
         "ref": "release-21.11",
         "type": "indirect"
-      }
-    },
-    "nixpkgs-2009": {
-      "locked": {
-        "lastModified": 1636935165,
-        "narHash": "sha256-J4smKTYTp8wJ57znUerWlS/QRgp0jcm/StcfIhsa5eA=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "f7949198dcff52265b322ca8abf7450610e7e49e",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nixos",
-        "ref": "release-20.09",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs-2105": {
-      "locked": {
-        "lastModified": 1640653651,
-        "narHash": "sha256-fByFYXYoE/6TqwKGbT7XBCOAlSsFzOXm4ZsRLoO70m8=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "7bca80140fc7732c7357b26002db3d87b3ba4c61",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nixos",
-        "ref": "release-21.05",
-        "repo": "nixpkgs",
-        "type": "github"
       }
     },
     "nixpkgs-2111": {
@@ -240,12 +176,8 @@
         "launchd_shim": "launchd_shim",
         "nix-fpga-tools": "nix-fpga-tools",
         "nixos": "nixos",
-        "nixos-2009": "nixos-2009",
-        "nixos-2105": "nixos-2105",
         "nixos-2111": "nixos-2111",
         "nixpkgs": "nixpkgs_2",
-        "nixpkgs-2009": "nixpkgs-2009",
-        "nixpkgs-2105": "nixpkgs-2105",
         "nixpkgs-2111": "nixpkgs-2111"
       }
     }

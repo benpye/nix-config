@@ -7,12 +7,6 @@
     nixos.url = "github:nixos/nixpkgs/nixos-unstable";
 
     # Stable release channels
-    nixpkgs-2009.url = "github:nixos/nixpkgs/release-20.09";
-    nixos-2009.url = "github:nixos/nixpkgs/nixos-20.09";
-
-    nixpkgs-2105.url = "github:nixos/nixpkgs/release-21.05";
-    nixos-2105.url = "github:nixos/nixpkgs/nixos-21.05";
-
     nixpkgs-2111.url = "github:nixos/nixpkgs/release-21.11";
     nixos-2111.url = "github:nixos/nixpkgs/nixos-21.11";
 
@@ -58,16 +52,11 @@
 
     nixosConfigurations = lib.mkNixosConfigurations {
       nixserve = {
-        nixos = inputs.nixos-2105;
+        nixos = inputs.nixos-2111;
         system = "x86_64-linux";
         overlays = [
           (self: super: { unstable = inputs.nixpkgs.legacyPackages.x86_64-linux; })
         ];
-      };
-
-      nixbuild = {
-        nixos = inputs.nixos-2009;
-        system = "x86_64-linux";
       };
 
       nixtop = {

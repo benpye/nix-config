@@ -26,14 +26,15 @@ in
   nixpkgs.config.allowUnfree = true;
 
   home.packages = [
-    pkgs.kicad-unstable
+    pkgs.kicad
     pkgs.cascadia-code
     pkgs.inter
     pkgs.i3lock
     pkgs.font-awesome
     pkgs.freecad
     pkgs._7zz
-    pkgs.xilinx-ise
+    pkgs.discord
+    pkgs.pavucontrol
   ];
 
   fonts.fontconfig.enable = true;
@@ -94,6 +95,7 @@ in
       "editor.fontFamily" = "Cascadia Code";
       "editor.inlayHints.fontFamily" = "Cascadia Code";
       "markdown.preview.fontFamily" = "Inter";
+      "terminal.external.linuxExec" = "alacritty";
     };
   };
 

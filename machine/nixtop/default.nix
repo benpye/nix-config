@@ -43,10 +43,10 @@
     enable = true;
     videoDrivers = [ "nvidia" ];
     screenSection = ''
-      Option "metamodes" "HDMI-0: nvidia-auto-select +0+0 {AllowGSYNCCompatible=On}"
+      Option "metamodes" "DP-4: nvidia-auto-select +0+0 {AllowGSYNCCompatible=On}"
     '';
     xrandrHeads = [
-      "HDMI-0"
+      "DP-4"
     ];
 
     # need to enable xterm so i3 can start from lightdm
@@ -61,7 +61,7 @@
   # uk keyboard layout as above
   services.xserver.layout = "gb";
 
-  services.udev.packages = [ pkgs.yubikey-personalization ];
+  services.udev.packages = [ pkgs.yubikey-personalization pkgs.xilinx-udev-rules ];
 
   security.rtkit.enable = true;
   services.pipewire = {

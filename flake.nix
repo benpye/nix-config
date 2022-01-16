@@ -62,6 +62,7 @@
       nixtop = {
         nixos = inputs.nixos-2111;
         system = "x86_64-linux";
+        overlays = [ inputs.nix-fpga-tools.overlay ];
       };
     };
 

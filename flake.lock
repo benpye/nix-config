@@ -18,6 +18,21 @@
     },
     "flake-utils_2": {
       "locked": {
+        "lastModified": 1642700792,
+        "narHash": "sha256-XqHrk7hFb+zBvRg6Ghl+AZDq03ov6OshJLiSWOoX5es=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "846b2ae0fc4cc943637d3d1def4454213e203cba",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "flake-utils_3": {
+      "locked": {
         "lastModified": 1610051610,
         "narHash": "sha256-U9rPz/usA1/Aohhk7Cmc2gBrEEKRzcW4nwPWMPwja4Y=",
         "owner": "numtide",
@@ -28,6 +43,27 @@
       "original": {
         "owner": "numtide",
         "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "hkrm4": {
+      "inputs": {
+        "flake-utils": "flake-utils_2",
+        "nixpkgs": [
+          "nixos-2111"
+        ]
+      },
+      "locked": {
+        "lastModified": 1643407501,
+        "narHash": "sha256-1y+dpZ5ZJB+uy/ooRqYeqKj78LePzxwqrjdtemjA5f4=",
+        "owner": "benpye",
+        "repo": "hkrm4",
+        "rev": "75744e447053393c1a5029bedb86a2528101cc31",
+        "type": "github"
+      },
+      "original": {
+        "owner": "benpye",
+        "repo": "hkrm4",
         "type": "github"
       }
     },
@@ -53,7 +89,7 @@
     },
     "launchd_shim": {
       "inputs": {
-        "flake-utils": "flake-utils_2",
+        "flake-utils": "flake-utils_3",
         "nixpkgs": [
           "nixpkgs"
         ]
@@ -172,6 +208,7 @@
     "root": {
       "inputs": {
         "flake-utils": "flake-utils",
+        "hkrm4": "hkrm4",
         "home-manager": "home-manager",
         "launchd_shim": "launchd_shim",
         "nix-fpga-tools": "nix-fpga-tools",

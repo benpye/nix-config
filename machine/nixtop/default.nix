@@ -29,6 +29,10 @@
   networking.useDHCP = false;
   networking.interfaces.enp4s0.useDHCP = true;
 
+  networking.firewall.enable = true;
+  networking.firewall.allowedTCPPorts = [ 5353 50000 ];
+  networking.firewall.allowedUDPPorts = [ 5353 ];
+
   time.timeZone = "America/Vancouver";
 
   # typically using a UK keyboard

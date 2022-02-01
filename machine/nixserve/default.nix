@@ -54,8 +54,8 @@ in
   networking.interfaces.eno2.useDHCP = true;
 
   networking.firewall.enable = true;
-  networking.firewall.allowedTCPPorts = [ 22 80 139 443 445 631 ];
-  networking.firewall.allowedUDPPorts = [ 80 137 138 443 631 ];
+  networking.firewall.allowedTCPPorts = [ 22 80 139 443 445 631 5353 50000 50002 ];
+  networking.firewall.allowedUDPPorts = [ 80 137 138 443 631 5353 ];
 
   # Use UTC for servers.
   time.timeZone = "UTC";
@@ -147,15 +147,6 @@ in
     };
   };
 
-  services.avahi = {
-    enable = true;
-    cacheEntriesMax = 0;
-    publish = {
-      enable = true;
-      userServices = true;
-    };
-  };
-
   services.printing = {
     enable = true;
     browsing = true;
@@ -168,6 +159,15 @@ in
         Allow from all
       </Location>
     '';
+  };
+
+  services.avahi = {
+    enable = true;
+    cacheEntriesMax = 0;
+    publish = {
+      enable = true;
+      userServices = true;
+    };
   };
 
   hardware.printers.ensurePrinters = [{
@@ -319,6 +319,60 @@ in
         "--keep-weekly 4"
       ];
     };
+  };
+
+  services.hkrm4 = {
+    enable = true;
+    metricsPort = 50001;
+    settings = {
+      ip = "192.168.10.78";
+      mac = "ec:0b:ae:23:f2:78";
+      type = 25755;
+      fans = [
+        {
+          id = "office";
+          name = "Ceiling Fan";
+          manufacturer = "Hunter Fan Company";
+          model = "59244";
+          firmwareRevision = "N/A";
+          serialNumber = "N/A";
+
+          commands = {
+            lightToggle = "scB8As6eBgAMDQ0NDQ0ODQ0NDQ0NDQ0NDQ4NDQ0NDaobDQ0aGg0aDhoNDRsMGwwbGg4MGxkOGg4ZDhkPCxwMGxkODRoaDgwbGg4ZDgwbGg0NGxkOGg0aDgwbDRoNGxoNDRoaDhkOGQ4aDRoOGQ4aDQ0bDBsNGg0bGg0NGg0bDBsNGg0bDBsNGg0bGQ4aDRoODBsaDRoNGg4aDRoOGQ4ZDhoODAADSQ0NDg0NDQ0NDQ0NDQ0ODQ0NDQ0NDQ0OqhoNDRobDRoOGQ4MGw0aDRsaDQ0aGg4ZDhoNGg4MGwwbGg4MGxoNDRsZDhoNDRsZDgwbGg0aDhkODRoNGw0aGg0NGxkOGg0aDhoNGg0aDhkODRoNGwwbDRoaDgwbDRoNGg0bDRoNGg0bDBsaDRoOGg0NGhoOGQ4aDRoOGQ4aDhkOGQ4MAAOnDgwODA4NDQ0NDQ0ODQ0NDQ0NDQ0NDg2qGg0OGhoNGg0aDg0aDRoNGxoNDRoaDhoNGg4ZDgwbDRsZDgwbGg4MGxoNGg4MGxkODBsaDhkOGg0NGwwbDBsaDgwbGg0aDhkOGg0aDhkOGQ4NGwwbDBsNGwwbDBsNGhoODBsMGxoOGQ4NGhoOGQ4aDRoOGQ4ZDg0bGQ4ZDg0bDBsZDg0AA0gODQ4MDgwODQ0NDQ0NDQ0NDg0NDQ0NDasaDQ0aGg4aDRoNDRsMGw0aGg4NGhoNGg4ZDhoODBsMGxoNDRsZDgwbGg4ZDgwbGg4MGxoNGg4ZDgwbDRsMGxkODRsZDhkOGg0aDhkOGg0aDgwbDRoNGwwbDBsNGwwbGQ4NGwwbGg0aDQ0bGQ4aDRoOGQ4aDRoODBsaDRoODBsNGhoODAAF3A==";
+            speed = [
+              "scB8As6eBgANDA4NDQ0ODA4MDg0NDQ0NDgwODQ0NDasaDQ0aGg4ZDhoNDRsMGwwbGg0NGxkOGg0aDhkODRoNGxkODRoaDgwbGg0aDgwbGg0NGxkOGg0aDgwbDBsNGhoODBsaDRoOGg0aDRoOGQ4aDQ0bDBsNGg0bDBsNGg0aDRsNGg0aDRsNGhoNGg4aDRoOGQ4ZDhoOGQ4ZDhoOGQ4ZDg0bDAADSQ4MDgwODA4NDQ0NDQ0NDg0NDQ0NDQ0NqxoNDRobDRoNGg4MGw0aDRsaDQ0aGg0aDhoNGg4MGw0aGg4MGxoNDRoaDhoNDRoaDgwbGg0aDhkODRoNGwwbGg0NGxkOGg0aDhkOGg0aDhkODBsNGg0bDBsNGg0bDBsNGg0bDBsNGg0bGQ4aDRoOGQ4aDRoOGQ4aDRoOGQ4aDRoODBsMAAOFDQ0ODA4MDgwODQ0NDgwODQ0NDQ0NDQ2qGw0NGhsNGg0aDgwbDRoNGhoODRoaDRoOGQ4aDQ0bDBsaDQ0bGQ4NGhoOGQ4NGhoODBsaDRoNGg4MGw0aDRsaDQ0aGg4aDRoNGg4ZDhoNGg4MGw0aDRsMGw0aDRoNGxoNDRoNGw0aGg4MGxoNGg0aDhoNGg0aDgwbGg4ZDhkODRoaDgwAA0kODA4NDQ0ODA4MDgwODQ0NDQ0NDg0NDaoaDQ4aGg0aDhoNDRoNGwwbGg0NGxkOGg0aDhkODBsNGxkODBsaDQ0bGg0aDQ0bGg0NGhoOGg0aDQ0bDBsNGhoODBsaDRoOGQ4aDRoOGQ4ZDg0bDBsMGw0aDRsMGw0aGg4MGw0aDRsZDg0aGg0aDhoNGg4ZDhoNDRsZDhoNGg4MGxoNDQAF3A=="
+              "scBCAc6eBgAPBAQHDgwODA4MDg0NDQ0NDQ0ODQ0NDQ0NqxoNDRoaDhoNGg4MGwwbDRoaDgwbGg0aDhkOGg0NGwwbGg0NGxkODRoaDhkODBsaDgwbGQ4aDhkODBsNGg0bGQ4NGhoOGQ4aDRoOGQ4ZDhoODBsNGg0bDBsNGg0aDRsNGg0aDRsNGhoNDRsaDRoNGg4aDRoNGg4ZDhoNGg4ZDgwbGg4MAANJDgwODQ0NDQ0ODA4MDg0NDQ0NDQ0NDg2qGg0OGhoNGg0bDQ0aDRsMGxoNDRoaDhkOGg4ZDgwbDRsZDgwbGg0NGxkOGg0NGxkODRoaDhkOGg0NGwwbDRoaDgwbGQ4aDhkOGQ4aDhkOGQ4NGg0bDBsNGg0bDBsNGg0bDBsNGg0bGg0NGhoNGg4aDRoOGQ4aDRoOGQ4ZDhoODBsaDQ0ABdw="
+              "scA6Ac6eBgBtCQ4MDg0NDQ0NDgwODQ0NDaobDQ0aGg4ZDhkODRsMGwwbGg4MGxkOGg0aDhkODRoNGxkODRoaDgwbGg0aDgwbGg0NGxkOGg0aDgwbDBsNGhoODRoaDRoOGQ4aDRoOGQ4aDgwbDBsNGg0bDBsNGg0bGg0NGg0bDBsNGg0aGg4aDRoNGg4aDRoODBsaDRoOGQ4ZDhoODAADSQ0NDgwODQ0NDQ0NDQ0ODQ0NDQ0NDgwOqhoNDRobDRoNGg4MGw0aDRsaDQ0aGg4aDRoNGg4MGw0aGg4MGxoNDRoaDhoNDRoaDgwbGg0aDhkODRoNGwwbGg0NGxoNGg0aDhkOGg0aDhkODBsNGg0bDBsNGg0bDBsaDQ0bDRoNGg0bDBsaDRoOGQ4aDRoOGQ4MGxoOGQ4aDRoOGQ4MAAXc"
+              "scBAAc6eBgAMDQ0NDQ0NDQ4NDQ0NDQ0NDQ0NDg0NDaoaDg0aGg0aDhkODRoNGwwbGg0NGxkOGg4ZDhkODBwMGxkODBsaDgwbGg0aDgwbGg0NGxkOGg0aDgwbDBsNGhoODBsaDRoOGQ4aDRoOGQ4aDQ0bDBsNGg0bDBsNGhoNDRsNGg0aDRsNGg0bGQ4aDRoNGg4aDQ0aGg4aDRoNGg4ZDhkPDAADSQ0NDgwODA4NDQ0NDQ4MDg0NDQ0NDQ0NqxoNDRobDRoNGg4NGg0aDRoaDgwbGg4ZDhoNGg4MGwwbGg4MGxkODBwZDhkODRsZDgwbGg0aDhkODBsNGwwbGg0NGxkOGg0aDhkOGQ4aDhkODBsNGg0bDBsNGg0bGg0NGg0bDBsNGg0bDBsaDRoOGQ4aDRoODBsaDRoOGQ4aDRoNGg4MAAXc"
+            ];
+          };
+        }
+        {
+          id = "bedroom";
+          name = "Ceiling Fan";
+          manufacturer = "Hunter Fan Company";
+          model = "59244";
+          firmwareRevision = "N/A";
+          serialNumber = "N/A";
+
+          commands = {
+            lightToggle = "ssBsAlCfBgD3BA4MDgwOqhoNDRsNGhoOGQ4NGhoOGQ4ZDg0bDBsMGxoODBsMGxoNDRsMGxoNDRsMGw0aDRoaDhoNGg0NGxoNGg0aDhoNGg0NGxoNGg0NGxoNDRoaDhoNGg0NGwwbDRoaDgwbDRoNGwwbDRoNGwwbDRoaDRoOGg0NGxkOGg0aDRoOGQ4aDRoOGQ4NAANIDg0NDQ0NDQ4NDQ0NDQ0NDQ4NDQ0NDQ2qGw0NGg0aGw0aDQ0aGw0aDRoODBsNGg0aGg4MGw0aGg4MGw0aGg4MGw0aDRsNGhoNGg4aDQ0aGg0aDhoNGg4ZDgwbGg0aDg0aGg4MGxoNGg0aDgwbDRoNGxkODRoNGw0aDRoNGwwbDRoNGxkOGg0aDgwbGg0bDRkOGQ4aDhkOGQ4aDgwAA6cNDQ0NDQ0ODQ0NDQ0NDQ4NDQ0NDQ0NDasaDQ0aDhoaDRoNDRsaDRoNGg4NGg0aDRsaDQ0aDRsaDQ0aDRsaDQ0aDRsMGw0aGg0bDRoNDRobDRoNGg4ZDhoNDRsZDhoNDRoaDgwbGg0aDhoNDRoNGwwbDRoNGwwbGg0NGwwbGg0aDQ0bGg0aDRsNGg0aDhkODBsaDRoODBsNGhoODQADSA4MDg0NDQ0NDgwODQ0NDQ0NDQ0ODQ0NqhoNDhoNGhsMGw0NGhoNGw0aDQ0bDBsNGhoNDRsNGhoNDRsNGhoNDRsNGg0aDRsaDRoNGg4NGhoNGg4aDRoNGg4MGxoNGg4MGxoNDRsZDhoNGg0NGw0aDRoNGw0aDRoaDgwbDRoaDhoNDRoaDhoNGg0aDhkOGg4MGxkOGg0NGwwbGg0NAAXc";
+            speed = [
+              "ssDkAlCfBgAGBQQhDCMIEQ4LBgQECwQEBBIFEScLEAQEGxYbDAQEHBgaBxIGEQcRBhoEFgQMDwkOCgQUBwYEDAQGBAsFEg8JBhIPCQ0PBBYEEgYSBxEPCQ8KDAwFBAQkBxAHEgcRBxIFEgcRDgsGKQ8JBxEGEgYSBgmpBA8LDwwODA4NDQ0NqhsNDRoNGhoOGg0NGhoOGg0aDQ0bDBsNGhoODBsNGhoODBsNGhoNDRsNGg0aDRsaDRoNGg4MGxoNGg4aDRoNGg4MGxoNGg4MGxoNDRoaDhoNGg4MGw0aDRsMGw0aDRoNGw0aDRoNGw0aGg0aDhoNGg0aDhkOGg4ZDhkOGg0aDhkODRoNAANJDgwODA4MDg0NDQ0NDgwODQ0NDQ0NDQ2rGg0NGg4aGg0aDQ0bGg0aDRoODBsNGg0bGg0NGg0bGg0NGg0bGg0NGg0bDRoNGhoNGw0aDQ0aGg4aDRoNGg4aDQ0aGg4aDQ0aGg4NGhoOGQ4aDQ0aDRsNGg0aDRsMGw0aDRoOGg0aDRsZDhoNGg4ZDhoNGg4ZDhoNGg4ZDhkOGg4MGw0AA4MODA4MDgwODQ4MDgwODA4MDg0NDQ0NDqoaDQ0aDhoaDRoNDhoaDRoNGw0NGg0bDRoaDQ0aDRsaDQ0aDRsaDQ0aDRsNGg0aGg4aDRoNDRsaDRoNGg4ZDhoNDRsZDhoNDRsZDg0aGg4ZDhoNDRoNGw0aDRoNGw0aGg0NGw0aDRoaDgwbGg0aDhoNGg0aDhkODRoaDhoNGg0NGhsNDQADSA4MDg0NDQ0NDgwODQ0NDQ0NDQ4NDQ0NqhsNDRoNGhsNGg0NGhoOGg0aDQ0bDRoNGhoODBsNGhoODRoNGhoODBsNGg0aDRsaDRoNGg4NGhoNGg4aDRoOGQ4NGhoOGQ4NGhoNDRsZDhoNGg4MGw0aDRsMGw0aDRsZDg0aDRsMGxoNDRsZDhoNGg0aDhoNGg0NGxoNGg0aDgwbGg0NAAXc"
+              "ssAwAVCfBgDxCA4NDQ0NqxoNDRsMGxoNGg4MGxoOGQ4ZDg0bDBsMGxoNDRsMGxoNDRoNGxkODRoNGw0aDRoaDhoNGg0NGhsNGg0aDhkOGg0NGxkOGg0NGhoODRoaDRoOGg0NGg0bDRoNGg0bDBsNGg0bDBsNGhoODBsaDRoOGQ4aDRoOGQ4aDRoOGQ4aDQ0bGQ4NAANIDg0NDQ0NDQ0NDQ4NDQ0NDQ0NDg0NDQ2qGg4NGg0aGg4aDQ0aGg4aDRoNDRsMGw0aGg4MGw0aGg0NGw0aGg0NGw0aDRoOGhoNGg0aDg0aGg0aDhoNGg0aDgwbGg0aDgwbGg0NGhoOGg0aDgwbDRoNGg0bDRoNGg0bDRoNGg0bGg0NGhoOGQ4aDRoOGQ4aDRoOGQ4aDRoODBsaDQ0ABdw="
+              "ssAwAVCfBgD2BA4MDg0NqhoODRoNGhoOGg0NGhoOGQ4aDgwbDBsNGhoODBsNGhoODBsNGhoNDRsNGg0aDRsaDRoNGg4MGxoNGg4aDRoNGg4NGhoNGg4MGxoNDRoaDhoNGg0NGw0aDRoOGg0aDRoaDg0aDRoNGw0aDRoaDhoNGg0aDRsNGg0NGhoOGg0aDhkOGg0NAANIDwwODA4MDgwODQ0NDgwODA4NDQ0NDQ2rGg0NGg4aGg0aDQ0bGg0aDRoODRoNGg0bGg0NGg0bGg0NGg0bGg0NGg0bDBsNGhoNGg4aDQ0aGg4aDRoNGg4aDQ0aGg4aDQ0aGg4MGxoNGg4ZDg0aDRsMGw0aDRoOGhoNDRoOGg0aDRoOGhoNGg0aDhoNGg0aDg0aGg0aDhoNGg0aDgwABdw="
+              "ssAwAVCfBgAAAQcODgwOqhoNDRoNGxoNGg4MGxoNGg4ZDgwbDRsMGxkODRsMGxkODRoNGxkODRoNGwwbDRoaDhoNGg0NGxoNGg0aDhkOGg0NGxkOGg0NGxkODRoaDRoOGg0NGg0bDBsNGg0bGg0NGg0bDBsNGg0bDBsaDRoNGw0aDRoNDRsaDRoNGg4aDRoNGg4MAANJDgwODQ0NDQ0ODA4NDQ0NDQ0NDgwODQ2qGw0NGg0aGwwbDQ0aGwwbDRoNDRsMGw0aGg4MGw0aGg4MGw0aGg4MGw0aDRoNGxoNGg0aDg0aGg0aDhoNGg0aDgwbGg0aDgwbGg0NGxoNGg0aDgwbDRoNGg0bDRoaDQ0bDRoNGg0bDRoNGhoOGg0aDRoOGg0NGhoNGw0aDRoOGQ4aDQ0ABdw="
+            ];
+          };
+        }
+      ];
+    };
+  };
+
+  services.huekit = {
+    enable = true;
+    port = 50002;
+    bridgeAddress = "192.168.10.64";
   };
 
   users.users = {

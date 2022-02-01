@@ -20,6 +20,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    hkrm4 = {
+      url = "github:benpye/hkrm4";
+      inputs.nixpkgs.follows = "nixos-2111";
+    };
+
     nix-fpga-tools.url = "github:benpye/nix-fpga-tools";
 
     flake-utils.url = "github:benpye/flake-utils/add-aarch64-darwin-as-default";
@@ -56,6 +61,7 @@
         system = "x86_64-linux";
         overlays = [
           (self: super: { unstable = inputs.nixpkgs.legacyPackages.x86_64-linux; })
+          inputs.hkrm4.overlay
         ];
       };
 

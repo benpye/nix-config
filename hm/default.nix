@@ -1,6 +1,6 @@
 { pkgs }:
 let
-  hostPlatform = pkgs.stdenv.hostPlatform;
+  inherit (pkgs.stdenv) hostPlatform;
 
   loadModule = file: { condition ? true }: {
     inherit file condition;

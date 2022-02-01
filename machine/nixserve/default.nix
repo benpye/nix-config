@@ -46,7 +46,7 @@ in
   };
 
   networking = {
-    hostName = hostName;
+    inherit hostName;
     hostId = "8ea92bbd";
   };
 

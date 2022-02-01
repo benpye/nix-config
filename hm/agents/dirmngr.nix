@@ -23,27 +23,25 @@ in
     };
   };
 
-  config = mkIf cfg.enable (
-    {
-      launchd.user.agents.dirmngr = {
-        serviceConfig = {
-          Umask = "0600";
-          ProgramArguments = [
-            "${pkgs.gnupg}/bin/dirmngr"
-            "--supervised"
-            (mkIf cfg.verbose "--verbose")
-          ];
+  config = mkIf cfg.enable {
+    launchd.user.agents.dirmngr = {
+      serviceConfig = {
+        Umask = "0600";
+        ProgramArguments = [
+          "${pkgs.gnupg}/bin/dirmngr"
+          "--supervised"
+          (mkIf cfg.verbose "--verbose")
+        ];
 
-          Sockets = {
-            std = {
-              SockPathName = "${config.home.homeDirectory}/.gnupg/S.dirmngr";
-              SockPathMode = "0600";
-            };
+        Sockets = {
+          std = {
+            SockPathName = "${config.home.homeDirectory}/.gnupg/S.dirmngr";
+            SockPathMode = "0600";
           };
         };
-
-        systemdSocketActivation = true;
       };
-    }
-  );
+
+      systemdSocketActivation = true;
+    };
+  };
 }

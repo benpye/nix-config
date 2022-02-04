@@ -6,4 +6,5 @@ self: super:
     withMPRIS = super.stdenv.isLinux;
     withCover = super.stdenv.isLinux;
   };
+  promscale = super.callPackage ./promscale {};
 }

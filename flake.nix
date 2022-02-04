@@ -74,10 +74,13 @@
 
   } // inputs.flake-utils.lib.eachDefaultSystem (system:
   let
-    pkgs = inputs.nixpkgs.legacyPackages.${system};
+    pkgs = import inputs.nixpkgs {
+      inherit system;
+      overlays = [ (import ./pkgs) ] ++ (import ./overlays);
+    };
   in
   {
-    packages = inputs.flake-utils.lib.flattenTree {
+    packages = pkgs // inputs.flake-utils.lib.flattenTree {
       # Export nixos-rebuild package with unstable nix for flakes.
       nixos-rebuild = pkgs.nixos-rebuild.override { nix = pkgs.nixUnstable; };
     };

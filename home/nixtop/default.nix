@@ -39,36 +39,6 @@ in
 
   fonts.fontconfig.enable = true;
 
-  programs.ncspot = {
-    enable = true;
-    settings = {
-      gapless = true;
-      notify = true;
-      backend = "rodio";
-
-      theme = {
-        background            = solarized.base3;
-        primary               = solarized.base00;
-        secondary             = solarized.base00;
-        title                 = solarized.base01;
-        playing               = solarized.yellow;
-        playing_selected      = solarized.yellow;
-        playing_bg            = solarized.base3;
-        highlight             = solarized.base01;
-        highlight_bg          = solarized.base2;
-        error                 = solarized.red;
-        error_bg              = solarized.base3;
-        statusbar_progress    = solarized.yellow;
-        statusbar_progress_bg = solarized.base00;
-        statusbar             = solarized.yellow;
-        statusbar_bg          = solarized.base3;
-        cmdline               = solarized.base3;
-        cmdline_bg            = solarized.base00;
-        search_match          = solarized.red;
-      };
-    };
-  };
-
   programs.firefox = {
     enable = true;
     package = pkgs.firefox-bin;

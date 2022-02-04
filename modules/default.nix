@@ -9,7 +9,6 @@ let
   modules = [
     (loadModule ./services/hkrm4.nix { })
     (loadModule ./services/huekit.nix { })
-    (loadModule ./services/matrix-ircd.nix {})
     (loadModule ./services/miniflux.nix { })
   ];
 in

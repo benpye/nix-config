@@ -9,7 +9,6 @@ let
   modules = [
     (loadModule ./services/hkrm4.nix { })
     (loadModule ./services/huekit.nix { })
-    (loadModule ./services/miniflux.nix { })
   ];
 in
 map (builtins.getAttr "file") (builtins.filter (builtins.getAttr "condition") modules)

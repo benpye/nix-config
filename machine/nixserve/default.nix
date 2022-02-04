@@ -132,18 +132,6 @@ in
           };
         };
       };
-
-      "miniflux.benpye.uk" = {
-        useACMEHost = "benpye.uk";
-        forceSSL = true;
-
-        locations = {
-          "/" = {
-            inherit extraConfig;
-            proxyPass = "http://localhost:9090";
-          };
-        };
-      };
     };
   };
 
@@ -183,18 +171,14 @@ in
 
   services.postgresql = {
     enable = true;
-    ensureDatabases = [ "bitwarden_rs" "miniflux2" ];
+    package = pkgs.postgresql_14;
+    extraPlugins = with pkgs.postgresql_14.pkgs; [ timescaledb ];
+    ensureDatabases = [ "bitwarden_rs" ];
     ensureUsers = [
       {
         name = "vaultwarden";
         ensurePermissions = {
           "DATABASE bitwarden_rs" = "ALL PRIVILEGES";
-        };
-      }
-      {
-        name = "miniflux2";
-        ensurePermissions = {
-          "DATABASE miniflux2" = "ALL PRIVILEGES";
         };
       }
     ];
@@ -287,20 +271,6 @@ in
         "write list" = "@sharewriters";
         "force group" = "nogroup";
       };
-    };
-  };
-
-  services.miniflux = {
-    enable = true;
-    package = pkgs.unstable.miniflux;
-    config = {
-      RUN_MIGRATIONS = "1";
-      CREATE_ADMIN = "1";
-      BASE_URL = "https://miniflux.benpye.uk";
-      ADMIN_USERNAME_FILE = "/etc/secrets/miniflux/admin_user.secret";
-      ADMIN_PASSWORD_FILE = "/etc/secrets/miniflux/admin_pass.secret";
-      DATABASE_URL = "postgresql:///miniflux2?host=/run/postgresql";
-      LISTEN_ADDR = "127.0.0.1:9090";
     };
   };
 

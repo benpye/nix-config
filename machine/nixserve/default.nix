@@ -173,7 +173,10 @@ in
     enable = true;
     package = pkgs.postgresql_14;
     extraPlugins = with pkgs.postgresql_14.pkgs; [ timescaledb ];
-    ensureDatabases = [ "bitwarden_rs" ];
+    settings = {
+      shared_preload_libraries = "timescaledb";
+    };
+    ensureDatabases = [ "bitwarden_rs" "promscale" ];
     ensureUsers = [
       {
         name = "vaultwarden";
@@ -181,7 +184,21 @@ in
           "DATABASE bitwarden_rs" = "ALL PRIVILEGES";
         };
       }
+      # TODO: promscale must be owner and requires CREATEROLE.
+      {
+        name = "promscale";
+        ensurePermissions = {
+          "DATABASE promscale" = "ALL PRIVILEGES";
+        };
+      }
     ];
+  };
+
+  services.promscale = {
+    enable = true;
+    config = {
+      "db.uri" = "postgresql:///promscale?host=/run/postgresql";
+    };
   };
 
   services.vaultwarden = {
@@ -294,7 +311,7 @@ in
   services.hkrm4 = {
     enable = true;
     metricsPort = 50001;
-    settings = {
+    config = {
       ip = "192.168.10.78";
       mac = "ec:0b:ae:23:f2:78";
       type = 25755;

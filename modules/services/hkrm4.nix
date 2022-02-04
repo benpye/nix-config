@@ -25,7 +25,7 @@ in {
         '';
       };
 
-      settings = mkOption {
+      config = mkOption {
         default = null;
         type = types.nullOr types.attrs;
         description = ''
@@ -50,7 +50,7 @@ in {
       after       = [ "network.target" ];
 
       serviceConfig = let
-        configFile = pkgs.writeText "config.json" (builtins.toJSON cfg.settings);
+        configFile = pkgs.writeText "config.json" (builtins.toJSON cfg.config);
       in {
         ExecStart = ''
           ${pkgs.hkrm4}/bin/hkrm4 \

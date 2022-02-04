@@ -7,7 +7,7 @@ buildGoModule rec {
   src = pkgs.fetchFromGitHub {
     owner = "timescale";
     repo = pname;
-    rev = version;
+    rev = "fe63ed83e04f2a6e8f602dd70728947a5e6e49c0";
     sha256 = "sha256-snbQVkJ4J5ElVNfHuSfb7VCZ64TqJ8Lx5uUaJPqBHl4=";
   };
 

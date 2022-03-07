@@ -2,16 +2,15 @@
   "nodes": {
     "flake-utils": {
       "locked": {
-        "lastModified": 1626720299,
-        "narHash": "sha256-YphweyFhpN5YYPRBuiu5RYwmzS9yTNrERf1NhmwbYd8=",
-        "owner": "benpye",
+        "lastModified": 1644229661,
+        "narHash": "sha256-1YdnJAsNy69bpcjuoKdOYQX0YxZBiCYZo4Twxerqv7k=",
+        "owner": "numtide",
         "repo": "flake-utils",
-        "rev": "e82ed9bdd19a7796ecb3a264ce9d7bad14bcf960",
+        "rev": "3cecb5b042f7f209c56ffd8371b2711a290ec797",
         "type": "github"
       },
       "original": {
-        "owner": "benpye",
-        "ref": "add-aarch64-darwin-as-default",
+        "owner": "numtide",
         "repo": "flake-utils",
         "type": "github"
       }
@@ -54,11 +53,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1643407501,
-        "narHash": "sha256-1y+dpZ5ZJB+uy/ooRqYeqKj78LePzxwqrjdtemjA5f4=",
+        "lastModified": 1644098403,
+        "narHash": "sha256-LIuawm7R4v5JyRqCqa324DeM9umCddhdXkYjkcuTzWU=",
         "owner": "benpye",
         "repo": "hkrm4",
-        "rev": "75744e447053393c1a5029bedb86a2528101cc31",
+        "rev": "ce07cce6faf3f6a56a90042488cd13bd38848157",
         "type": "github"
       },
       "original": {
@@ -126,6 +125,26 @@
         "type": "github"
       }
     },
+    "nix-velocloud": {
+      "inputs": {
+        "nixos": [
+          "nixos-2111"
+        ]
+      },
+      "locked": {
+        "lastModified": 1646607425,
+        "narHash": "sha256-mgG3hM+R4dymiAZ7ywUJR/YV2Uy1KhxhzMjKfHAnbts=",
+        "owner": "benpye",
+        "repo": "nix-velocloud",
+        "rev": "63c836d35059f1d661c23ea4b1d8db84cbd473f7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "benpye",
+        "repo": "nix-velocloud",
+        "type": "github"
+      }
+    },
     "nixos": {
       "locked": {
         "lastModified": 1642104392,
@@ -144,11 +163,11 @@
     },
     "nixos-2111": {
       "locked": {
-        "lastModified": 1641870998,
-        "narHash": "sha256-6HkxR2WZsm37VoQS7jgp6Omd71iw6t1kP8bDbaqCDuI=",
+        "lastModified": 1646406548,
+        "narHash": "sha256-xp+3f76ycZXNf9pG65Ef9KfDl1fas2UQu/cBe/pLd+c=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "386234e2a61e1e8acf94dfa3a3d3ca19a6776efb",
+        "rev": "47cd6702934434dd02bc53a67dbce3e5493e33a2",
         "type": "github"
       },
       "original": {
@@ -175,11 +194,11 @@
     },
     "nixpkgs-2111": {
       "locked": {
-        "lastModified": 1642354282,
-        "narHash": "sha256-LkerZmpdlEB4g2CXysE5POZFsY3VqcP7qxLy9rGXECQ=",
+        "lastModified": 1646619001,
+        "narHash": "sha256-KnAlqtda0zm5xe0YT6XXKLY85T8bW5JbVUrytekMKPM=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "046cead56ec5f1ffca61b66739ef804e6dff9795",
+        "rev": "6f80a5e8ec444f123752cffb15764f91da57f1f5",
         "type": "github"
       },
       "original": {
@@ -212,6 +231,7 @@
         "home-manager": "home-manager",
         "launchd_shim": "launchd_shim",
         "nix-fpga-tools": "nix-fpga-tools",
+        "nix-velocloud": "nix-velocloud",
         "nixos": "nixos",
         "nixos-2111": "nixos-2111",
         "nixpkgs": "nixpkgs_2",

@@ -27,7 +27,12 @@
 
     nix-fpga-tools.url = "github:benpye/nix-fpga-tools";
 
-    flake-utils.url = "github:benpye/flake-utils/add-aarch64-darwin-as-default";
+    flake-utils.url = "github:numtide/flake-utils";
+
+    nix-velocloud = {
+      url = "github:benpye/nix-velocloud";
+      inputs.nixos.follows = "nixos-2111";
+    };
   };
 
   outputs = inputs@{ self, ... }:
@@ -69,6 +74,12 @@
         nixos = inputs.nixos-2111;
         system = "x86_64-linux";
         overlays = [ inputs.nix-fpga-tools.overlay ];
+      };
+
+      routenix = {
+        nixos = inputs.nixos-2111;
+        system = "x86_64-linux";
+        overlays = [ inputs.nix-velocloud.overlay ];
       };
     };
 

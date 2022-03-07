@@ -54,7 +54,7 @@ in
   networking.interfaces.eno2.useDHCP = true;
 
   networking.firewall.enable = true;
-  networking.firewall.allowedTCPPorts = [ 22 80 139 443 445 631 5353 50000 50002 ];
+  networking.firewall.allowedTCPPorts = [ 22 80 139 443 445 631 5353 9003 50000 50002 ];
   networking.firewall.allowedUDPPorts = [ 80 137 138 443 631 5353 ];
 
   # Use UTC for servers.
@@ -191,6 +191,10 @@ in
           "DATABASE promscale" = "ALL PRIVILEGES";
         };
       }
+      # TODO: postgres-exporter requires pg_read_all_stats.
+      {
+        name = "postgres-exporter";
+      }
     ];
   };
 
@@ -198,6 +202,88 @@ in
     enable = true;
     config = {
       "db.uri" = "postgresql:///promscale?host=/run/postgresql";
+    };
+  };
+
+  services.prometheus = {
+    enable = true;
+    port = 9003;
+    remoteWrite = [{
+      url = "http://localhost:9201/write";
+    }];
+    remoteRead = [{
+      url = "http://localhost:9201/read";
+      read_recent = true;
+    }];
+    scrapeConfigs = [
+      {
+        job_name = "node";
+        static_configs = [
+          {
+            targets = [ "localhost:9100" ];
+            labels.role = "homeserver";
+          }
+          {
+            targets = [ "192.168.10.73:9100" ];
+            labels.role = "desktop";
+          }
+        ];
+      }
+      {
+        job_name = "postgres";
+        static_configs = [
+          {
+            targets = [ "localhost:9101" ];
+          }
+        ];
+      }
+      {
+        job_name = "smartctl";
+        static_configs = [
+          {
+            targets = [ "localhost:9102" "192.168.10.73:9101" ];
+          }
+        ];
+      }
+      {
+        job_name = "hkrm4";
+        static_configs = [
+          {
+            targets = [ "localhost:50001" ];
+          }
+        ];
+        metric_relabel_configs = [
+          {
+            source_labels = [ "__name__" ];
+            target_label = "id";
+            regex = "sensor_(relative_humidity_percentage|temperature_celsius)";
+            replacement = "rm4-office";
+          }
+        ];
+      }
+    ];
+    exporters = {
+      node = {
+        enable = true;
+        port = 9100;
+        enabledCollectors = [ "systemd" ];
+      };
+      postgres = {
+        enable = true;
+        port = 9101;
+        dataSourceName = "postgresql:///postgres?host=/run/postgresql";
+      };
+      smartctl = {
+        enable = true;
+        port = 9102;
+        devices = [
+          "/dev/disk/by-id/ata-Crucial_CT120M500SSD1_13390951485C"
+          "/dev/disk/by-id/ata-HDS723030ALA640_RSD_HUA_MK0331YHGV1BUA"
+          "/dev/disk/by-id/ata-HDS723030ALA640_RSD_HUA_MK0361YHGMZTTD"
+          "/dev/disk/by-id/ata-HDS723030ALA640_RSD_HUA_MK0361YHGNPEVD"
+          "/dev/disk/by-id/ata-HDS723030ALA640_RSD_HUA_MK0361YHGNW0PD"
+        ];
+      };
     };
   };
 
@@ -317,7 +403,7 @@ in
       type = 25755;
       fans = [
         {
-          id = "office";
+          id = "office-ceiling";
           name = "Ceiling Fan";
           manufacturer = "Hunter Fan Company";
           model = "59244";
@@ -335,7 +421,7 @@ in
           };
         }
         {
-          id = "bedroom";
+          id = "bedroom-ceiling";
           name = "Ceiling Fan";
           manufacturer = "Hunter Fan Company";
           model = "59244";

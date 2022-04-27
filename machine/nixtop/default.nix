@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 {
   imports =
@@ -16,10 +16,23 @@
   };
 
   boot = {
-    loader.systemd-boot.enable = true;
+    loader.systemd-boot = {
+      enable = true;
+      consoleMode = "max";
+    };
+
     loader.efi.canTouchEfiVariables = true;
     supportedFilesystems = [ "zfs" ];
+
+    # Reserve Nvidia GPU for VFIO only
+    kernelModules = [ "vfio" "vfio_iommu_type1" "vfio_pci" "vfio_virqfd" ];
+    extraModprobeConfig ="options vfio-pci ids=10de:1b81,10de:10f0";
+
+    # Required for SR-IOV
+    kernelParams = [ "pci=realloc,assign-busses" ];
   };
+
+  hardware.video.hidpi.enable = false;
 
   networking = {
     hostName = "nixtop";
@@ -27,11 +40,11 @@
   };
 
   networking.useDHCP = false;
-  networking.interfaces.enp4s0.useDHCP = true;
+  networking.interfaces.enp1s0f0.useDHCP = true;
 
   networking.firewall.enable = true;
-  networking.firewall.allowedTCPPorts = [ 5353 50000 ];
-  networking.firewall.allowedUDPPorts = [ 5353 ];
+  networking.firewall.allowedTCPPorts = ( lib.range 1714 1764 ) ++ [ 5353 50000 ];
+  networking.firewall.allowedUDPPorts = ( lib.range 1714 1764 ) ++ [ 5353 ];
 
   time.timeZone = "America/Vancouver";
 
@@ -45,19 +58,33 @@
   # x11 config for monitor layout and gsync
   services.xserver = {
     enable = true;
-    videoDrivers = [ "nvidia" ];
-    screenSection = ''
-      Option "metamodes" "DP-4: nvidia-auto-select +0+0 {AllowGSYNCCompatible=On}"
-    '';
-    xrandrHeads = [
-      "DP-4"
-    ];
+    videoDrivers = [ "amdgpu" ];
 
-    # need to enable xterm so i3 can start from lightdm
-    desktopManager.xterm.enable = true;
+    displayManager.sddm = {
+      enable = true;
+
+      settings = {
+        General = {
+          # DisplayServer = "wayland";
+          GreeterEnvironment = "QT_WAYLAND_SHELL_INTEGRATION=layer-shell"; #,QT_LOGGING_RULES=kwin_*.debug=true";
+          InputMethod = "";
+        };
+
+        Wayland = {
+          CompositorCommand = "kwin_wayland --no-lockscreen --inputmethod qtvirtualkeyboard";
+        };
+      };
+    };
+
+    desktopManager.plasma5 = {
+      enable = true;
+      runUsingSystemd = true;
+    };
   };
 
-  hardware.nvidia.modesetting.enable = true;
+  programs.xwayland.enable = true;
+
+  services.xserver.dpi = 96;
 
   # ensure that 32-bit graphics and audio libraries are available
   hardware.opengl.driSupport32Bit = true;
@@ -73,10 +100,6 @@
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
-
-    # use the example session manager (no others are packaged yet so this is enabled by default,
-    # no need to redefine it in your config for now)
-    #media-session.enable = true;
   };
 
   services.rpcbind.enable = true;
@@ -101,9 +124,28 @@
     };
   };
 
+  services.udev.extraRules = ''
+    ACTION=="add", SUBSYSTEM=="net", ENV{ID_NET_DRIVER}=="ixgbe", ATTR{device/sriov_numvfs}="4"
+  '';
+
+  virtualisation.libvirtd = {
+    enable = true;
+    qemu.swtpm.enable = true;
+  };
+
+  # Add ZFS for zpool support.
+  systemd.services.libvirtd.path = [ pkgs.zfs ];
+
+  programs.dconf.enable = true;
+  programs.wireshark.enable = true;
+
+  environment.systemPackages = [
+    pkgs.virt-manager
+  ];
+
   users.users.ben = {
     isNormalUser = true;
-    extraGroups = [ "wheel" ];
+    extraGroups = [ "wheel" "libvirtd" "wireshark" ];
   };
 
   # This value determines the NixOS release from which the default

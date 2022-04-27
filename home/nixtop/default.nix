@@ -19,29 +19,46 @@ let
     cyan =    "#2aa198";
     green =   "#859900";
   };
-
-  lockCmd = "${pkgs.i3lock}/bin/i3lock -n -c 000000";
 in
 {
-  nixpkgs.config.allowUnfree = true;
+  nixpkgs.config = {
+    allowUnfree = true;
+    # firefox.enablePlasmaBrowserIntegration = true;
+  };
 
   home.packages = [
     pkgs.kicad
     pkgs.cascadia-code
     pkgs.inter
-    pkgs.i3lock
-    pkgs.font-awesome
     pkgs.freecad
     pkgs._7zz
     pkgs.discord
-    pkgs.pavucontrol
+    pkgs.eclipses.eclipse-java
+    pkgs.openjdk11
+    pkgs.steam
+    pkgs.plasma-integration
+    pkgs.plasma-browser-integration
+    pkgs.cider
   ];
+
+  home.file.".mozilla/native-messaging-hosts".source = pkgs.symlinkJoin {
+    name = "native-messaging-hosts";
+    paths = [
+      "${pkgs.plasma-browser-integration}/lib/mozilla/native-messaging-hosts"
+    ];
+  };
+
+  systemd.user.sessionVariables = {
+    MOZ_ENABLE_WAYLAND = 1;
+    #NIXOS_OZONE_WL = 1;
+    SSH_AUTH_SOCK = "$XDG_RUNTIME_DIR/gnupg/S.gpg-agent.ssh";
+  };
 
   fonts.fontconfig.enable = true;
 
   programs.firefox = {
     enable = true;
-    package = pkgs.firefox-bin;
+    package = pkgs.firefox;
     profiles.default.settings = {
       "browser.contentblocking.category" = "strict";
       "browser.search.isUS" = false;
@@ -60,8 +77,8 @@ in
       "workbench.colorTheme" = "Solarized Light";
       "files.insertFinalNewline" = "true";
       "files.trimTrailingWhitespace" = "true";
-      "window.titleBarStyle" = "custom";
-      "window.menuBarVisibility" = "classic";
+      "window.titleBarStyle" = "native";
+      "window.menuBarVisibility" = "toggle";
       "editor.fontFamily" = "Cascadia Code";
       "editor.inlayHints.fontFamily" = "Cascadia Code";
       "markdown.preview.fontFamily" = "Inter";
@@ -123,8 +140,6 @@ in
   programs.alacritty = {
     enable = true;
     settings = {
-      background_opacity = 1.0;
-
       font = {
         normal = {
           family = "Cascadia Code";
@@ -133,6 +148,7 @@ in
       };
 
       window = {
+        opacity = 1.0;
         padding = {
           x = 8;
           y = 8;
@@ -170,319 +186,7 @@ in
     };
   };
 
-  programs.i3status-rust = {
-    enable = true;
-    bars =  {
-      default = {
-        blocks = [
-          {
-            block = "disk_space";
-            path = "/";
-            alias = "/";
-            info_type = "available";
-            unit = "GB";
-            interval = 60;
-            warning = 20.0;
-            alert = 10.0;
-          }
-          {
-            block = "memory";
-            display_type = "memory";
-            format_mem = "{mem_total_used_percents}";
-            format_swap = "{swap_used_percents}";
-          }
-          {
-            block = "cpu";
-            interval = 1;
-          }
-          {
-            block = "load";
-            format = "{1m}";
-            interval = 1;
-          }
-          {
-            block = "sound";
-            driver = "pulseaudio";
-          }
-          {
-            block = "time";
-            format = "%a %d/%m %R";
-            interval = 60;
-          }
-        ];
-        icons = "awesome5";
-        settings = {
-          theme = {
-            name = "solarized-light";
-            overrides = {
-              separator= " ";
-            };
-          };
-        };
-      };
-    };
-  };
-
-  xsession = {
-    enable = true;
-
-    windowManager.i3 = {
-      enable = true;
-
-      extraConfig = ''
-        title_align center
-      '';
-
-      config = {
-        modifier = "Mod4";
-
-        colors = {
-          background = solarized.base3;
-
-          focused = {
-            background = solarized.blue;
-            border = solarized.blue;
-            # border = solarized.base1;
-            childBorder = solarized.base1;
-            indicator = solarized.blue;
-            text = solarized.base2;
-          };
-
-          focusedInactive = {
-            #  background = solarized.base2;
-            background = solarized.base2;
-            border = solarized.base2;
-            # border = solarized.magenta;
-            childBorder = solarized.base2;
-            # childBorder = solarized.magenta;
-            indicator = solarized.base2;
-            text = solarized.base01;
-          };
-
-          placeholder = {
-            background = "#0c0c0c";
-            border = "#000000";
-            childBorder = "#0c0c0c";
-            indicator = "#000000";
-            text = "#ffffff";
-          };
-
-          unfocused = {
-            # background = solarized.base3;
-            # border = solarized.base1;
-            # childBorder = solarized.base1;
-            background = solarized.base3;
-            border = solarized.base2;
-            childBorder = solarized.base2;
-            indicator = solarized.base2;
-            text = solarized.base00;
-          };
-
-          urgent = {
-            background = solarized.red;
-            border = solarized.red;
-            # border = solarized.base1;
-            childBorder = solarized.base1;
-            indicator = solarized.base1;
-            text = solarized.base2;
-          };
-        };
-
-        window = {
-          hideEdgeBorders = "smart";
-        };
-
-        terminal = "alacritty";
-        menu = "\"rofi -modi combi -combi-modi drun,run -show combi -show-icons\"";
-
-        fonts = {
-          names = [ "Inter" "Font Awesome 5 Free" ];
-          size = 11.0;
-        };
-
-        gaps = {
-          inner = 12;
-          outer = 0;
-        };
-
-        keybindings = let
-          mod = config.xsession.windowManager.i3.config.modifier;
-        in lib.mkOptionDefault {
-          "${mod}+l" = "exec ${lockCmd}";
-        };
-
-        bars = [{
-          mode = "dock";
-          hiddenState = "hide";
-          position = "top";
-          workspaceButtons = true;
-          workspaceNumbers = true;
-          statusCommand = "${pkgs.i3status-rust}/bin/i3status-rs ${config.xdg.configHome}/i3status-rust/config-default.toml";
-
-          fonts = {
-            names = [ "Inter" "Font Awesome 5 Free" ];
-            size = 11.0;
-          };
-
-          trayOutput = "primary";
-
-          colors = {
-            background = solarized.base3;
-            statusline = solarized.base00;
-            separator = solarized.base0;
-            focusedWorkspace = {
-              border = solarized.blue;
-              background = solarized.blue;
-              text = solarized.base2;
-            };
-            activeWorkspace = {
-              border = solarized.base2;
-              background = solarized.base2;
-              text = solarized.base01;
-            };
-            inactiveWorkspace = {
-              border = solarized.base3;
-              background = solarized.base3;
-              text = solarized.base00;
-            };
-            urgentWorkspace = {
-              border = solarized.red;
-              background = solarized.red;
-              text = solarized.base2;
-            };
-            bindingMode = {
-              border = solarized.base1;
-              background = solarized.yellow;
-              text = solarized.base2;
-            };
-          };
-        }];
-      };
-    };
-  };
-
-  services.picom = {
-    enable = true;
-    backend = "xrender";
-    experimentalBackends = true;
-    shadow = true;
-    vSync = true;
-    opacityRule = [
-      "80:class_g =   'i3bar'"
-      "90:class_g =   'Alacritty'"
-    ];
-    extraOptions = ''
-      unredir-if-possible = true;
-
-      blur:
-      {
-        method = "gaussian";
-        size = 20;
-        deviation = 10;
-      };
-    '';
-  };
-
-  services.dunst = {
-    enable = true;
-    settings = {
-      global = {
-        follow = "mouse";
-        geometry = "480x5-16+40";
-        transparency = 0;
-        padding = 8;
-        horizontal_padding = 8;
-        frame_width = 2;
-        frame_color = solarized.base0;
-        seperator_color = solarized.base1;
-        font = "Inter 11";
-      };
-
-      urgency_low = {
-        background = solarized.base3;
-        foreground = solarized.base00;
-        timeout = 10;
-      };
-
-      urgency_normal = {
-        background = solarized.base3;
-        foreground = solarized.base01;
-        timeout = 10;
-      };
-
-      urgency_critical = {
-        background = solarized.base3;
-        foreground = solarized.red;
-        timeout = 0;
-      };
-    };
-  };
-
-  services.redshift = {
-    enable = true;
-    latitude = 49.246292;
-    longitude = -123.116226;
-    provider = "manual";
-    tray = true;
-    temperature = {
-      day = 6000;
-      night = 3500;
-    };
-  };
-
-  programs.rofi = {
-    enable = true;
-  };
-
-  xresources.properties = {
-    "Xft.dpi" = 96;
-  };
-
-  services.random-background = {
-#    enable = true;
-    interval = "1h";
-    imageDirectory = "%h/backgrounds";
-  };
-
-  services.screen-locker = {
-    enable = true;
-    inactiveInterval = 5;
-    inherit lockCmd;
-  };
-
-  # programs.foot = {
-  #   enable = true;
-  #   settings = {
-  #     main = {
-  #       font = "Cascadia Code:size=11";
-  #       dpi-aware = "yes";
-  #     };
-  #   };
-  # };
-
-  # wayland.windowManager.sway = {
-  #   enable = true;
-  #   config = {
-  #     modifier = "Mod4";
-
-  #     window = {
-  #       hideEdgeBorders = "smart";
-  #       titlebar = true;
-  #     };
-
-  #     terminal = "foot";
-
-  #     fonts = {
-  #       names = [ "Inter" "Font Awesome 5 Free" ];
-  #       size = 11.0;
-  #     };
-
-  #     gaps = {
-  #       inner = 12;
-  #       outer = 0;
-  #     };
-  #   };
-  # };
+  services.kdeconnect.enable = true;
 
   home.keyboard.layout = "gb";
 

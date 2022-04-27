@@ -198,6 +198,8 @@ in
     ];
   };
 
+  systemd.services.postgresql.serviceConfig.TimeoutStartSec = "infinity";
+
   services.promscale = {
     enable = true;
     config = {

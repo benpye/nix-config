@@ -104,26 +104,6 @@
 
   services.rpcbind.enable = true;
 
-  services.prometheus = {
-    exporters = {
-      node = {
-        enable = true;
-        port = 9100;
-        openFirewall = true;
-        enabledCollectors = [ "systemd" ];
-      };
-      smartctl = {
-        enable = true;
-        port = 9101;
-        openFirewall = true;
-        devices = [
-          "/dev/disk/by-id/ata-SanDisk_SDSSDHII960G_151926400175"
-          "/dev/disk/by-id/nvme-ADATA_SX8200PNP_2J1620097701"
-        ];
-      };
-    };
-  };
-
   services.udev.extraRules = ''
     ACTION=="add", SUBSYSTEM=="net", ENV{ID_NET_DRIVER}=="ixgbe", ATTR{device/sriov_numvfs}="4"
   '';

@@ -2,7 +2,7 @@
 
 let
   lan = "enp0s20f2";
-  wan = "enp0s20f3";
+  wan = "enp4s0f0";
 
 in rec
 {
@@ -69,7 +69,7 @@ in rec
 
     interfaces = {
       # Unused interfaces.
-      enp4s0f0.useDHCP = false;
+      enp0s20f3.useDHCP = false;
       enp4s0f1.useDHCP = false;
       wlp2s0.useDHCP = false;
 

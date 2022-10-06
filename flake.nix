@@ -10,6 +10,9 @@
     nixpkgs-2111.url = "github:nixos/nixpkgs/release-21.11";
     nixos-2111.url = "github:nixos/nixpkgs/nixos-21.11";
 
+    nixpkgs-2205.url = "github:nixos/nixpkgs/release-22.05";
+    nixos-2205.url = "github:nixos/nixpkgs/nixos-22.05";
+
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -22,7 +25,7 @@
 
     hkrm4 = {
       url = "github:benpye/hkrm4";
-      inputs.nixpkgs.follows = "nixos-2111";
+      inputs.nixpkgs.follows = "nixos-2205";
     };
 
     nix-fpga-tools.url = "github:benpye/nix-fpga-tools";
@@ -62,7 +65,7 @@
 
     nixosConfigurations = lib.mkNixosConfigurations {
       nixserve = {
-        nixos = inputs.nixos-2111;
+        nixos = inputs.nixos-2205;
         system = "x86_64-linux";
         overlays = [
           (self: super: { unstable = inputs.nixpkgs.legacyPackages.x86_64-linux; })

@@ -71,8 +71,8 @@ in
   security.sudo.enable = true;
 
   security.acme = {
-    email = "ben@curlybracket.co.uk";
     acceptTerms = true;
+    defaults.email = "ben@curlybracket.co.uk";
     certs = {
       "benpye.uk" = {
         extraDomainNames = [ "*.benpye.uk" ];
@@ -197,16 +197,17 @@ in
     };
   };
 
-  services.ssmtp = {
+  programs.msmtp = {
     enable = true;
 
-    authUser = "ben@curlybracket.co.uk";
-    authPassFile = "/etc/secrets/fastmail.secret";
-
-    useTLS = true;
-    hostName = "smtp.fastmail.com:465";
-    domain = "curlybracket.co.uk";
-    root = "root@curlybracket.co.uk";
+    accounts.default = {
+      tls = true;
+      auth = true;
+      host = "smtp.fastmail.com";
+      port = 465;
+      user = "ben@curlybracket.co.uk";
+      passwordeval = "cat /etc/secrets/fastmail.secret";
+    };
   };
 
   services.smartd = {
@@ -241,7 +242,7 @@ in
 
   services.thelounge = {
     enable = true;
-    private = true;
+    public = false;
     extraConfig = {
       reverseProxy = true;
     };

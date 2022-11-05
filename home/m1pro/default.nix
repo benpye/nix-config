@@ -3,7 +3,7 @@
 {
   home.sessionPath = [ "/Applications/Visual Studio Code - Insiders.app/Contents/Resources/app/bin" ];
 
-  home.packages = [ pkgs.qemu6 pkgs.arduino-cli pkgs.rustup ];
+  home.packages = [ pkgs.arduino-cli pkgs.rustup pkgs.qemu pkgs.gtkwave ];
 
   programs.git = {
     enable = true;
@@ -13,6 +13,11 @@
     };
     userEmail = "ben@curlybracket.co.uk";
     userName = "Ben Pye";
+    extraConfig = {
+      init = {
+        defaultBranch = "main";
+      };
+    };
   };
 
   programs.go = {
@@ -21,6 +26,10 @@
 
   programs.gpg = {
     enable = true;
+    scdaemonSettings = {
+      disable-ccid = true;
+      reader-port = "Yubico Yubikey NEO OTP+U2F+CCID";
+    };
   };
 
   programs.ssh = {
@@ -40,6 +49,11 @@
         hostname = "192.168.10.66";
       };
 
+      "nixblaster" = {
+        forwardAgent = true;
+        hostname = "192.168.1.121";
+      };
+
       "nixbuild" = {
         forwardAgent = true;
       };
@@ -54,6 +68,9 @@
 
   programs.zsh = {
     enable = true;
+    envExtra = ''
+    . ${pkgs.nix}/etc/profile.d/nix.sh
+    '';
   };
 
   services.gpg-agent = {

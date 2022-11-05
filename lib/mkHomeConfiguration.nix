@@ -15,10 +15,15 @@ let
   else homeDirectory;
 in
 home-manager.lib.homeManagerConfiguration {
-  configuration = {
-    nixpkgs.overlays = [ (import ../pkgs) ] ++ (import ../overlays) ++ overlays;
-    imports = [ (../home + "/${name}") ] ++ (import ../hm { inherit pkgs; });
-  };
-  homeDirectory = homeDirectory';
-  inherit system username pkgs stateVersion;
+  inherit pkgs;
+  modules = [
+    {
+      nixpkgs.overlays = [ (import ../pkgs) ] ++ (import ../overlays) ++ overlays;
+      imports = [ (../home + "/${name}") ] ++ (import ../hm { inherit pkgs; });
+      home = {
+        homeDirectory = homeDirectory';
+        inherit username stateVersion;
+      };
+    }
+  ];
 }

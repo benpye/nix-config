@@ -84,6 +84,11 @@
         system = "x86_64-linux";
         overlays = [ inputs.nix-velocloud.overlay ];
       };
+
+      nixblaster = {
+        nixos = inputs.nixos-2205;
+        system = "aarch64-linux";
+      };
     };
 
   } // inputs.flake-utils.lib.eachDefaultSystem (system:

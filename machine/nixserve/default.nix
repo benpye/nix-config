@@ -173,6 +173,7 @@ in
   services.postgresql = {
     enable = true;
     package = pkgs.postgresql_14;
+    dataDir = "/persist/pgsql/14";
     ensureDatabases = [ "bitwarden_rs" ];
     ensureUsers = [
       {
@@ -182,6 +183,9 @@ in
         };
       }
     ];
+    settings = {
+      full_page_writes = false;
+    };
   };
 
   systemd.services.postgresql.serviceConfig.TimeoutStartSec = "infinity";
@@ -232,7 +236,7 @@ in
 
   services.zfs.autoScrub = {
     enable = true;
-    interval = "Sun, 02:00";
+    interval = "Mon, 09:00";
   };
 
   services.zfs.autoSnapshot = {

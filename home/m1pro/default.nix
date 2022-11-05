@@ -46,7 +46,7 @@
 
       "nixserve" = {
         forwardAgent = true;
-        hostname = "192.168.10.66";
+        hostname = "192.168.1.20";
       };
 
       "nixblaster" = {

@@ -29,6 +29,21 @@
       fsType = "zfs";
     };
 
+  fileSystems."/persist/pgsql/14" =
+    { device = "tank/system/safe/persist/pgsql/14";
+      fsType = "zfs";
+    };
+
+  fileSystems."/persist/pgsql/14/base" =
+    { device = "tank/system/safe/persist/pgsql/14/base";
+      fsType = "zfs";
+    };
+
+  fileSystems."/persist/pgsql/14/pg_wal" =
+    { device = "tank/system/safe/persist/pgsql/14/pg_wal";
+      fsType = "zfs";
+    };
+
   fileSystems."/nix" =
     { device = "tank/system/local/nix";
       fsType = "zfs";

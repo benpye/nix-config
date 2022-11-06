@@ -18,7 +18,7 @@ in
     loader.grub = {
       enable = true;
       version = 2;
-      device = "/dev/disk/by-id/usb-HP_iLO_Internal_SD-CARD_000002660A01-0:0";
+      device = "/dev/disk/by-id/usb-Kingston_DataTraveler_3.0_002618086C69F051F849AA30-0:0";
     };
 
     initrd = {
@@ -55,7 +55,7 @@ in
   networking.interfaces.enp7s0.useDHCP = true;
 
   networking.firewall.enable = true;
-  networking.firewall.allowedTCPPorts = [ 22 80 139 443 445 631 5353 9003 50000 50002 ];
+  networking.firewall.allowedTCPPorts = [ 22 80 139 443 445 631 5353 9003 50000 50002 50004 ];
   networking.firewall.allowedUDPPorts = [ 80 137 138 443 631 5353 ];
 
   # Use UTC for servers.
@@ -350,6 +350,43 @@ in
     enable = false;
     port = 50002;
     bridgeAddress = "192.168.10.64";
+  };
+
+  services.mosquitto = {
+    enable = true;
+    dataDir = "/persist/mosquitto";
+    listeners = [
+      {
+        port = 50003;
+        omitPasswordAuth = true;
+        settings = {
+          allow_anonymous = true;
+        };
+        acl = [
+          "topic readwrite #"
+          "pattern readwrite #"
+        ];
+      }
+    ];
+  };
+
+  services.zigbee2mqtt = {
+    enable = true;
+    dataDir = "/persist/zigbee2mqtt";
+    settings = {
+      mqtt = {
+        server = "mqtt://localhost:50003";
+      };
+      serial = {
+        port = "/dev/ttyUSB0";
+      };
+      advanced = {
+        network_key = "!secret network_key";
+      };
+      frontend = {
+        port = 50004;
+      };
+    };
   };
 
   users.users = {

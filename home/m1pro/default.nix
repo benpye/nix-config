@@ -49,6 +49,11 @@
         hostname = "192.168.1.20";
       };
 
+      "routenix" = {
+        forwardAgent = true;
+        hostname = "192.168.1.1";
+      };
+
       "nixblaster" = {
         forwardAgent = true;
         hostname = "192.168.1.121";

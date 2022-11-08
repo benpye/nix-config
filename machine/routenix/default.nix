@@ -63,7 +63,7 @@ in rec
     hostName = "routenix";
     hostId = "3b8c16d1";
 
-    nameservers = [ "1.1.1.1" "1.0.0.1" ];
+    nameservers = [ "149.112.121.10" "1.1.1.1" ];
 
     useDHCP = false;
 
@@ -284,7 +284,7 @@ in rec
       option subnet-mask 255.255.255.0;
       option broadcast-address 192.168.1.255;
       option routers 192.168.1.1;
-      option domain-name-servers 1.1.1.1, 1.0.0.1;
+      option domain-name-servers 149.112.121.10, 1.1.1.1;
       option domain-name "int.hresult.dev";
       subnet 192.168.1.0 netmask 255.255.255.0 {
         range 192.168.1.100 192.168.1.200;
@@ -306,7 +306,7 @@ in rec
         AdvAutonomous on;
       };
 
-      RDNSS 2606:4700:4700::1111 2606:4700:4700::1001 {
+      RDNSS 2620:10A:80BB::10 2606:4700:4700::1111 {
       };
 
       DNSSL int.hresult.dev {
@@ -343,4 +343,3 @@ in rec
   system.stateVersion = "21.11"; # Did you read the comment?
 
 }
-

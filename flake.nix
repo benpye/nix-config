@@ -13,6 +13,9 @@
     nixpkgs-2205.url = "github:nixos/nixpkgs/release-22.05";
     nixos-2205.url = "github:nixos/nixpkgs/nixos-22.05";
 
+    nixpkgs-2211.url = "github:nixos/nixpkgs/release-22.11";
+    nixos-2211.url = "github:nixos/nixpkgs/nixos-22.11";
+
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -25,7 +28,7 @@
 
     hkrm4 = {
       url = "github:benpye/hkrm4";
-      inputs.nixpkgs.follows = "nixos-2205";
+      inputs.nixpkgs.follows = "nixos-2211";
     };
 
     nix-fpga-tools.url = "github:benpye/nix-fpga-tools";
@@ -34,7 +37,7 @@
 
     nix-velocloud = {
       url = "github:benpye/nix-velocloud";
-      inputs.nixos.follows = "nixos-2111";
+      inputs.nixos.follows = "nixos-2211";
     };
   };
 
@@ -65,7 +68,7 @@
 
     nixosConfigurations = lib.mkNixosConfigurations {
       nixserve = {
-        nixos = inputs.nixos-2205;
+        nixos = inputs.nixos-2211;
         system = "x86_64-linux";
         overlays = [
           (self: super: { unstable = inputs.nixpkgs.legacyPackages.x86_64-linux; })
@@ -80,7 +83,7 @@
       };
 
       routenix = {
-        nixos = inputs.nixos-2111;
+        nixos = inputs.nixos-2211;
         system = "x86_64-linux";
         overlays = [ inputs.nix-velocloud.overlay ];
       };

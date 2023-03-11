@@ -10,7 +10,8 @@ in
     ];
 
   nixpkgs.config.allowUnfree = true;
-  nix.trustedUsers = [ "ben" ];
+
+  nix.settings.trusted-users = [ "ben" ];
 
   boot = {
     supportedFilesystems = [ "zfs" ];
@@ -158,6 +159,8 @@ in
       userServices = true;
     };
   };
+
+  hardware.rasdaemon.enable = true;
 
   hardware.printers.ensurePrinters = [{
     description = "Brother HL-L2320D";

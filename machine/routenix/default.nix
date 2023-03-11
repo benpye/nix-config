@@ -11,7 +11,7 @@ in rec
       ./hardware-configuration.nix
     ];
 
-  nix.trustedUsers = [ "ben" ];
+  nix.settings.trusted-users = [ "ben" ];
 
   boot = {
     # Use the GRUB 2 boot loader.
@@ -31,7 +31,9 @@ in rec
     # Use Linux 5.15 with the VeloCloud modules.
     kernelPackages = pkgs.linuxKernel.packages.linux_5_15;
     extraModulePackages = [ (pkgs.velocloud-modules.override {
-      kernel = boot.kernelPackages.kernel;
+      kernel = {
+        prePatch = "";
+      } // boot.kernelPackages.kernel;
     }) ];
 
     # Serial on ttyS1.
@@ -314,6 +316,8 @@ in rec
     };
     '';
   };
+
+  hardware.rasdaemon.enable = true;
 
   # Enable the OpenSSH daemon.
   services.openssh.enable = true;

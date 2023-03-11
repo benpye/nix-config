@@ -389,6 +389,8 @@ in
     };
   };
 
+  hardware.bluetooth.enable = true;
+
   users.users = {
     ben = {
       extraGroups = [ "wheel" "sharewriters" ];

@@ -339,6 +339,24 @@ in
     };
   };
 
+  services.mi2mqtt = {
+    enable = true;
+    server = "mqtt://localhost:50003?client_id=mi2mqtt";
+  };
+
+  virtualisation.oci-containers.containers.homebridge = {
+    image = "oznu/homebridge:latest";
+    extraOptions = [ "--network=host" "--privileged" ];
+    volumes = [
+      "/persist/homebridge:/homebridge"
+      "/var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket"
+      "/var/run/dbus:/var/run/dbus"
+    ];
+    environment = {
+      "ENABLE_AVAHI" = "0";
+    };
+  };
+
   hardware.bluetooth.enable = true;
 
   users.users = {

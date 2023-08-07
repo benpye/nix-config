@@ -20,6 +20,7 @@ home-manager.lib.homeManagerConfiguration {
     {
       nixpkgs.overlays = [ (import ../pkgs) ] ++ (import ../overlays) ++ overlays;
       imports = [ (../home + "/${name}") ] ++ (import ../hm { inherit pkgs; });
+      disabledModules = [ ] ++ pkgs.lib.optionals (pkgs.hostPlatform.isDarwin) [ "services/gpg-agent.nix" ];
       home = {
         homeDirectory = homeDirectory';
         inherit username stateVersion;

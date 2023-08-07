@@ -10,6 +10,9 @@
     nixpkgs-2311.url = "github:nixos/nixpkgs/release-23.11";
     nixos-2311.url = "github:nixos/nixpkgs/nixos-23.11";
 
+    nixpkgs-2305.url = "github:nixos/nixpkgs/release-23.05";
+    nixos-2305.url = "github:nixos/nixpkgs/nixos-23.05";
+
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";

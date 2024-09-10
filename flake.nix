@@ -7,14 +7,8 @@
     nixos.url = "github:nixos/nixpkgs/nixos-unstable";
 
     # Stable release channels
-    nixpkgs-2111.url = "github:nixos/nixpkgs/release-21.11";
-    nixos-2111.url = "github:nixos/nixpkgs/nixos-21.11";
-
-    nixpkgs-2205.url = "github:nixos/nixpkgs/release-22.05";
-    nixos-2205.url = "github:nixos/nixpkgs/nixos-22.05";
-
-    nixpkgs-2211.url = "github:nixos/nixpkgs/release-22.11";
-    nixos-2211.url = "github:nixos/nixpkgs/nixos-22.11";
+    nixpkgs-2311.url = "github:nixos/nixpkgs/release-23.11";
+    nixos-2311.url = "github:nixos/nixpkgs/nixos-23.11";
 
     home-manager = {
       url = "github:nix-community/home-manager";
@@ -26,9 +20,14 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    mi2mqtt = {
+      url = "github:benpye/mi2mqtt";
+      inputs.nixpkgs.follows = "nixos-2311";
+    };
+
     hkrm4 = {
       url = "github:benpye/hkrm4";
-      inputs.nixpkgs.follows = "nixos-2211";
+      inputs.nixpkgs.follows = "nixos-2311";
     };
 
     nix-fpga-tools.url = "github:benpye/nix-fpga-tools";
@@ -37,7 +36,7 @@
 
     nix-velocloud = {
       url = "github:benpye/nix-velocloud";
-      inputs.nixos.follows = "nixos-2211";
+      inputs.nixos.follows = "nixos-2311";
     };
   };
 
@@ -47,6 +46,7 @@
   in
   {
     homeConfigurations = lib.mkHomeConfigurations {
+      # MacBook
       m1pro = {
         home-manager = inputs.home-manager;
         system = "aarch64-darwin";
@@ -56,41 +56,39 @@
         overlays = [ inputs.launchd_shim.overlay ];
       };
 
-      nixtop = {
+      # Desktop
+      hydrogen = {
         home-manager = inputs.home-manager;
         system = "x86_64-linux";
-        stateVersion = "21.11";
+        stateVersion = "23.11";
         username = "ben";
         homeDirectory = "/home/ben";
-        overlays = [ inputs.nix-fpga-tools.overlay ];
+        overlays = [ ];
       };
     };
 
     nixosConfigurations = lib.mkNixosConfigurations {
-      nixserve = {
-        nixos = inputs.nixos-2211;
-        system = "x86_64-linux";
-        overlays = [
-          (self: super: { unstable = inputs.nixpkgs.legacyPackages.x86_64-linux; })
-          inputs.hkrm4.overlay
-        ];
-      };
-
-      nixtop = {
+      # Desktop
+      hydrogen = {
         nixos = inputs.nixos;
         system = "x86_64-linux";
         overlays = [ inputs.nix-fpga-tools.overlay ];
       };
 
-      routenix = {
-        nixos = inputs.nixos-2211;
+      # Home server
+      nixserve = {
+        nixos = inputs.nixos-2311;
         system = "x86_64-linux";
-        overlays = [ inputs.nix-velocloud.overlay ];
+        overlays = [
+          inputs.mi2mqtt.overlay
+        ];
       };
 
-      nixblaster = {
-        nixos = inputs.nixos-2205;
-        system = "aarch64-linux";
+      # Router
+      routenix = {
+        nixos = inputs.nixos-2311;
+        system = "x86_64-linux";
+        overlays = [ inputs.nix-velocloud.overlay ];
       };
     };
 

@@ -11,13 +11,25 @@ in rec
       ./hardware-configuration.nix
     ];
 
-  nix.settings.trusted-users = [ "ben" ];
+  nix = {
+    settings = {
+      allowed-users = [ "@wheel" ];
+      trusted-users = [ "@wheel" ];
+    };
+
+    gc = {
+      automatic = true;
+      dates = "weekly";
+      options = "--delete-older-than 14d";
+    };
+
+    optimise.automatic = true;
+  };
 
   boot = {
     # Use the GRUB 2 boot loader.
     loader.grub = {
       enable = true;
-      version = 2;
       extraConfig = ''
         serial --unit=1 --speed=115200 --word=8 --parity=no --stop=1
         terminal_input --append serial
@@ -43,7 +55,13 @@ in rec
     initrd = {
       kernelModules = [ "lpc_ich" "velocloud-edge-5x0" ];
       availableKernelModules = [ "gpio_ich" "iTCO_wdt" ];
+      postDeviceCommands = lib.mkAfter ''
+        zfs rollback -r rpool/local/root@blank
+      '';
     };
+
+    # Disable WiFi adapter
+    blacklistedKernelModules = [ "ath10k_pci" ];
 
     kernel.sysctl = {
       # Enable IPv4 and IPv6 forwarding.
@@ -62,7 +80,7 @@ in rec
   time.timeZone = "UTC";
 
   networking = {
-    hostName = "routenix";
+    hostName = "lithium";
     hostId = "3b8c16d1";
 
     nameservers = [ "149.112.121.10" "1.1.1.1" ];
@@ -107,18 +125,19 @@ in rec
       runHook = ''
         if [ "$reason" = BOUND ] || [ "$reason" = RENEW ] || [ "$reason" = REBIND ] || [ "$reason" = REBOOT ]; then
           ${pkgs.curl}/bin/curl -X PATCH "https://api.cloudflare.com/client/v4/zones/cd22faa3ccb393ec2d2717cd574eba11/dns_records/5a15ed0011443e26a07b49b3c2c4e8a1" \
-            --config /etc/secrets/ddns.secret \
+            --config /secret/ddns.secret \
             -H "Content-Type: application/json" \
             --data '{ "type": "A", "name": "nixserve.benpye.uk", "content": "'$new_ip_address'", "ttl": 1, "proxied": true }'
         fi
       '';
     };
 
-    # Default default firewall in favour of nftables.
+    # Disable default firewall in favour of nftables.
     firewall.enable = false;
 
     nftables = {
       enable = true;
+      checkRuleset = false;
       ruleset = ''
         table inet filter {
           flowtable f {
@@ -270,28 +289,53 @@ in rec
   };
 
   # Enable DHCPv4 server.
-  services.dhcpd4 = {
+  services.kea.dhcp4 = {
     enable = true;
-    interfaces = [ lan ];
+    settings = {
+      interfaces-config = {
+        interfaces = [ lan ];
+      };
 
-    machines = [
-      {
-        ethernetAddress = "94:18:82:37:5f:a9";
-        hostName = "nixserve";
-        ipAddress = "192.168.1.20";
-      }
-    ];
+      subnet4 = [
+        {
+          id = 1;
+          subnet = "192.168.1.0/24";
+          pools = [
+            {
+              pool = "192.168.1.100 - 192.168.1.200";
+            }
+          ];
 
-    extraConfig = ''
-      option subnet-mask 255.255.255.0;
-      option broadcast-address 192.168.1.255;
-      option routers 192.168.1.1;
-      option domain-name-servers 149.112.121.10, 1.1.1.1;
-      option domain-name "int.hresult.dev";
-      subnet 192.168.1.0 netmask 255.255.255.0 {
-        range 192.168.1.100 192.168.1.200;
-      }
-    '';
+          reservations = [
+            # nixserve
+            {
+              hw-address = "94:18:82:37:5f:a9";
+              ip-address = "192.168.1.20";
+            }
+          ];
+        }
+      ];
+
+      option-data = [
+        {
+          name = "domain-name-servers";
+          csv-format = true;
+          data = "149.112.121.10, 1.1.1.1";
+        }
+        {
+          name = "domain-name";
+          data = "int.hresult.dev";
+        }
+        {
+          name = "routers";
+          data = "192.168.1.1";
+        }
+        {
+          name = "broadcast-address";
+          data = "192.168.1.255";
+        }
+      ];
+    };
   };
 
   # Enable Router Advertisement daemon.
@@ -319,12 +363,141 @@ in rec
 
   hardware.rasdaemon.enable = true;
 
+  services.grafana-agent = {
+    enable = true;
+    settings = {
+      logs = {
+        configs = [
+          {
+            clients = [
+              {
+                basic_auth = {
+                  password_file = "\${CREDENTIALS_DIRECTORY}/loki_remote_write_password";
+                  username = "800499";
+                };
+                url = "https://logs-prod-018.grafana.net/loki/api/v1/push";
+              }
+            ];
+            name = "default";
+            positions = {
+              filename = "\${STATE_DIRECTORY}/loki_positions.yaml";
+            };
+            scrape_configs = [
+              {
+                job_name = "journal";
+                journal = {
+                  max_age = "12h";
+                  labels = {
+                    job = "systemd-journal";
+                  };
+                };
+                relabel_configs = [
+                  {
+                    source_labels = [ "__journal__systemd_unit" ];
+                    target_label = "systemd_unit";
+                  }
+                  {
+                    source_labels = [ "__journal__hostname" ];
+                    target_label = "hostname";
+                  }
+                  {
+                    source_labels = [ "__journal__boot_id" ];
+                    target_label = "boot_id";
+                  }
+                  {
+                    source_labels = [ "__journal__transport" ];
+                    target_label = "transport";
+                  }
+                  {
+                    source_labels = [ "__journal_syslog_identifier" ];
+                    target_label = "syslog_identifier";
+                  }
+                  {
+                    source_labels = [ "__journal_priority_keyword" ];
+                    target_label = "level";
+                  }
+                ];
+              }
+            ];
+          }
+        ];
+      };
+      metrics = {
+        global = {
+          scrape_interval = "60s";
+          remote_write = [
+            {
+              basic_auth = {
+                  password_file = "\${CREDENTIALS_DIRECTORY}/prom_remote_write_password";
+                  username = "1402961";
+                };
+                url = "https://prometheus-prod-32-prod-ca-east-0.grafana.net/api/prom/push";
+            }
+          ];
+        };
+      };
+      integrations = {
+        node_exporter = {
+          enabled = true;
+          disable_collectors = [
+            # zfs collector is overly verbose
+            "zfs"
+          ];
+          filesystem_fs_types_exclude = "^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|tmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs|ramfs)$";
+          metric_relabel_configs = [
+            {
+              action = "drop";
+              regex = "node_scrape_collector_.+";
+              source_labels = [ "__name__" ];
+            }
+          ];
+        };
+      };
+    };
+    credentials = {
+      loki_remote_write_password = "/secret/loki.secret";
+      prom_remote_write_password = "/secret/prom.secret";
+    };
+  };
+
   # Enable the OpenSSH daemon.
-  services.openssh.enable = true;
+  services.openssh = {
+    enable = true;
+    hostKeys = [
+      {
+        bits = 4096;
+        path = "/secret/ssh/ssh_host_rsa_key";
+        type = "rsa";
+      }
+      {
+        path = "/secret/ssh/ssh_host_ed25519_key";
+        type = "ed25519";
+      }
+    ];
+    allowSFTP = false;
+    settings = {
+      PasswordAuthentication = false;
+      KbdInteractiveAuthentication = false;
+    };
+  };
 
   # Use agent forwarding for sudo.
   security.pam.enableSSHAgentAuth = true;
-  security.sudo.enable = true;
+
+  security.sudo = {
+    enable = true;
+    execWheelOnly = true;
+    extraConfig = ''
+      Defaults lecture = never
+    '';
+  };
+
+  environment.defaultPackages = lib.mkForce [];
+
+  systemd.tmpfiles.rules = [
+    "L /var/db/dhcpcd - - - - /persist/var/db/dhcpcd"
+    "L /var/lib/private/kea - - - - /persist/var/lib/private/kea"
+  ];
 
   users.users = {
     ben = {

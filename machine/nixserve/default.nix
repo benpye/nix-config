@@ -18,8 +18,7 @@ in
 
     loader.grub = {
       enable = true;
-      version = 2;
-      device = "/dev/disk/by-id/usb-Kingston_DataTraveler_3.0_002618086C69F051F849AA30-0:0";
+      device = "/dev/disk/by-id/usb-Memorex_USB_Flash_Drive_071829EE8DF39C35-0:0";
     };
 
     initrd = {
@@ -56,7 +55,7 @@ in
   networking.interfaces.enp7s0.useDHCP = true;
 
   networking.firewall.enable = true;
-  networking.firewall.allowedTCPPorts = [ 22 80 139 443 445 631 5353 9003 50000 50002 50004 ];
+  networking.firewall.allowedTCPPorts = [ 22 80 139 443 445 631 5353 8581 9003 21064 50000 50004 51943 ];
   networking.firewall.allowedUDPPorts = [ 80 137 138 443 631 5353 ];
 
   # Use UTC for servers.
@@ -137,20 +136,6 @@ in
     };
   };
 
-  services.printing = {
-    enable = true;
-    browsing = true;
-    defaultShared = true;
-    drivers = [ pkgs.brlaser ];
-    listenAddresses = [ "*:631" ];
-    extraConf = pkgs.lib.mkForce ''
-      <Location />
-        Order allow,deny
-        Allow from all
-      </Location>
-    '';
-  };
-
   services.avahi = {
     enable = true;
     cacheEntriesMax = 0;
@@ -162,22 +147,11 @@ in
 
   hardware.rasdaemon.enable = true;
 
-  hardware.printers.ensurePrinters = [{
-    description = "Brother HL-L2320D";
-    name = "Brother_HL-L2320D";
-    deviceUri = "usb://Brother/HL-L2320D%20series?serial=U63877F0N258909";
-    model = "drv:///brlaser.drv/brl2320d.ppd";
-    ppdOptions = {
-      PageSize = "Letter";
-      Duplex = "DuplexNoTumble";
-    };
-  }];
-
   services.postgresql = {
     enable = true;
     package = pkgs.postgresql_14;
     dataDir = "/persist/pgsql/14";
-    ensureDatabases = [ "bitwarden_rs" ];
+    ensureDatabases = [ "bitwarden_rs" "hass" ];
     ensureUsers = [
       {
         name = "vaultwarden";
@@ -301,60 +275,6 @@ in
     };
   };
 
-  services.hkrm4 = {
-    enable = false;
-    metricsPort = 50001;
-    config = {
-      ip = "192.168.10.78";
-      mac = "ec:0b:ae:23:f2:78";
-      type = 25755;
-      fans = [
-        {
-          id = "office-ceiling";
-          name = "Ceiling Fan";
-          manufacturer = "Hunter Fan Company";
-          model = "59244";
-          firmwareRevision = "N/A";
-          serialNumber = "N/A";
-
-          commands = {
-            lightToggle = "scB8As6eBgAMDQ0NDQ0ODQ0NDQ0NDQ0NDQ4NDQ0NDaobDQ0aGg0aDhoNDRsMGwwbGg4MGxkOGg4ZDhkPCxwMGxkODRoaDgwbGg4ZDgwbGg0NGxkOGg0aDgwbDRoNGxoNDRoaDhkOGQ4aDRoOGQ4aDQ0bDBsNGg0bGg0NGg0bDBsNGg0bDBsNGg0bGQ4aDRoODBsaDRoNGg4aDRoOGQ4ZDhoODAADSQ0NDg0NDQ0NDQ0NDQ0ODQ0NDQ0NDQ0OqhoNDRobDRoOGQ4MGw0aDRsaDQ0aGg4ZDhoNGg4MGwwbGg4MGxoNDRsZDhoNDRsZDgwbGg0aDhkODRoNGw0aGg0NGxkOGg0aDhoNGg0aDhkODRoNGwwbDRoaDgwbDRoNGg0bDRoNGg0bDBsaDRoOGg0NGhoOGQ4aDRoOGQ4aDhkOGQ4MAAOnDgwODA4NDQ0NDQ0ODQ0NDQ0NDQ0NDg2qGg0OGhoNGg0aDg0aDRoNGxoNDRoaDhoNGg4ZDgwbDRsZDgwbGg4MGxoNGg4MGxkODBsaDhkOGg0NGwwbDBsaDgwbGg0aDhkOGg0aDhkOGQ4NGwwbDBsNGwwbDBsNGhoODBsMGxoOGQ4NGhoOGQ4aDRoOGQ4ZDg0bGQ4ZDg0bDBsZDg0AA0gODQ4MDgwODQ0NDQ0NDQ0NDg0NDQ0NDasaDQ0aGg4aDRoNDRsMGw0aGg4NGhoNGg4ZDhoODBsMGxoNDRsZDgwbGg4ZDgwbGg4MGxoNGg4ZDgwbDRsMGxkODRsZDhkOGg0aDhkOGg0aDgwbDRoNGwwbDBsNGwwbGQ4NGwwbGg0aDQ0bGQ4aDRoOGQ4aDRoODBsaDRoODBsNGhoODAAF3A==";
-            speed = [
-              "scB8As6eBgANDA4NDQ0ODA4MDg0NDQ0NDgwODQ0NDasaDQ0aGg4ZDhoNDRsMGwwbGg0NGxkOGg0aDhkODRoNGxkODRoaDgwbGg0aDgwbGg0NGxkOGg0aDgwbDBsNGhoODBsaDRoOGg0aDRoOGQ4aDQ0bDBsNGg0bDBsNGg0aDRsNGg0aDRsNGhoNGg4aDRoOGQ4ZDhoOGQ4ZDhoOGQ4ZDg0bDAADSQ4MDgwODA4NDQ0NDQ0NDg0NDQ0NDQ0NqxoNDRobDRoNGg4MGw0aDRsaDQ0aGg0aDhoNGg4MGw0aGg4MGxoNDRoaDhoNDRoaDgwbGg0aDhkODRoNGwwbGg0NGxkOGg0aDhkOGg0aDhkODBsNGg0bDBsNGg0bDBsNGg0bDBsNGg0bGQ4aDRoOGQ4aDRoOGQ4aDRoOGQ4aDRoODBsMAAOFDQ0ODA4MDgwODQ0NDgwODQ0NDQ0NDQ2qGw0NGhsNGg0aDgwbDRoNGhoODRoaDRoOGQ4aDQ0bDBsaDQ0bGQ4NGhoOGQ4NGhoODBsaDRoNGg4MGw0aDRsaDQ0aGg4aDRoNGg4ZDhoNGg4MGw0aDRsMGw0aDRoNGxoNDRoNGw0aGg4MGxoNGg0aDhoNGg0aDgwbGg4ZDhkODRoaDgwAA0kODA4NDQ0ODA4MDgwODQ0NDQ0NDg0NDaoaDQ4aGg0aDhoNDRoNGwwbGg0NGxkOGg0aDhkODBsNGxkODBsaDQ0bGg0aDQ0bGg0NGhoOGg0aDQ0bDBsNGhoODBsaDRoOGQ4aDRoOGQ4ZDg0bDBsMGw0aDRsMGw0aGg4MGw0aDRsZDg0aGg0aDhoNGg4ZDhoNDRsZDhoNGg4MGxoNDQAF3A=="
-              "scBCAc6eBgAPBAQHDgwODA4MDg0NDQ0NDQ0ODQ0NDQ0NqxoNDRoaDhoNGg4MGwwbDRoaDgwbGg0aDhkOGg0NGwwbGg0NGxkODRoaDhkODBsaDgwbGQ4aDhkODBsNGg0bGQ4NGhoOGQ4aDRoOGQ4ZDhoODBsNGg0bDBsNGg0aDRsNGg0aDRsNGhoNDRsaDRoNGg4aDRoNGg4ZDhoNGg4ZDgwbGg4MAANJDgwODQ0NDQ0ODA4MDg0NDQ0NDQ0NDg2qGg0OGhoNGg0bDQ0aDRsMGxoNDRoaDhkOGg4ZDgwbDRsZDgwbGg0NGxkOGg0NGxkODRoaDhkOGg0NGwwbDRoaDgwbGQ4aDhkOGQ4aDhkOGQ4NGg0bDBsNGg0bDBsNGg0bDBsNGg0bGg0NGhoNGg4aDRoOGQ4aDRoOGQ4ZDhoODBsaDQ0ABdw="
-              "scA6Ac6eBgBtCQ4MDg0NDQ0NDgwODQ0NDaobDQ0aGg4ZDhkODRsMGwwbGg4MGxkOGg0aDhkODRoNGxkODRoaDgwbGg0aDgwbGg0NGxkOGg0aDgwbDBsNGhoODRoaDRoOGQ4aDRoOGQ4aDgwbDBsNGg0bDBsNGg0bGg0NGg0bDBsNGg0aGg4aDRoNGg4aDRoODBsaDRoOGQ4ZDhoODAADSQ0NDgwODQ0NDQ0NDQ0ODQ0NDQ0NDgwOqhoNDRobDRoNGg4MGw0aDRsaDQ0aGg4aDRoNGg4MGw0aGg4MGxoNDRoaDhoNDRoaDgwbGg0aDhkODRoNGwwbGg0NGxoNGg0aDhkOGg0aDhkODBsNGg0bDBsNGg0bDBsaDQ0bDRoNGg0bDBsaDRoOGQ4aDRoOGQ4MGxoOGQ4aDRoOGQ4MAAXc"
-              "scBAAc6eBgAMDQ0NDQ0NDQ4NDQ0NDQ0NDQ0NDg0NDaoaDg0aGg0aDhkODRoNGwwbGg0NGxkOGg4ZDhkODBwMGxkODBsaDgwbGg0aDgwbGg0NGxkOGg0aDgwbDBsNGhoODBsaDRoOGQ4aDRoOGQ4aDQ0bDBsNGg0bDBsNGhoNDRsNGg0aDRsNGg0bGQ4aDRoNGg4aDQ0aGg4aDRoNGg4ZDhkPDAADSQ0NDgwODA4NDQ0NDQ4MDg0NDQ0NDQ0NqxoNDRobDRoNGg4NGg0aDRoaDgwbGg4ZDhoNGg4MGwwbGg4MGxkODBwZDhkODRsZDgwbGg0aDhkODBsNGwwbGg0NGxkOGg0aDhkOGQ4aDhkODBsNGg0bDBsNGg0bGg0NGg0bDBsNGg0bDBsaDRoOGQ4aDRoODBsaDRoOGQ4aDRoNGg4MAAXc"
-            ];
-          };
-        }
-        {
-          id = "bedroom-ceiling";
-          name = "Ceiling Fan";
-          manufacturer = "Hunter Fan Company";
-          model = "59244";
-          firmwareRevision = "N/A";
-          serialNumber = "N/A";
-
-          commands = {
-            lightToggle = "ssBsAlCfBgD3BA4MDgwOqhoNDRsNGhoOGQ4NGhoOGQ4ZDg0bDBsMGxoODBsMGxoNDRsMGxoNDRsMGw0aDRoaDhoNGg0NGxoNGg0aDhoNGg0NGxoNGg0NGxoNDRoaDhoNGg0NGwwbDRoaDgwbDRoNGwwbDRoNGwwbDRoaDRoOGg0NGxkOGg0aDRoOGQ4aDRoOGQ4NAANIDg0NDQ0NDQ4NDQ0NDQ0NDQ4NDQ0NDQ2qGw0NGg0aGw0aDQ0aGw0aDRoODBsNGg0aGg4MGw0aGg4MGw0aGg4MGw0aDRsNGhoNGg4aDQ0aGg0aDhoNGg4ZDgwbGg0aDg0aGg4MGxoNGg0aDgwbDRoNGxkODRoNGw0aDRoNGwwbDRoNGxkOGg0aDgwbGg0bDRkOGQ4aDhkOGQ4aDgwAA6cNDQ0NDQ0ODQ0NDQ0NDQ4NDQ0NDQ0NDasaDQ0aDhoaDRoNDRsaDRoNGg4NGg0aDRsaDQ0aDRsaDQ0aDRsaDQ0aDRsMGw0aGg0bDRoNDRobDRoNGg4ZDhoNDRsZDhoNDRoaDgwbGg0aDhoNDRoNGwwbDRoNGwwbGg0NGwwbGg0aDQ0bGg0aDRsNGg0aDhkODBsaDRoODBsNGhoODQADSA4MDg0NDQ0NDgwODQ0NDQ0NDQ0ODQ0NqhoNDhoNGhsMGw0NGhoNGw0aDQ0bDBsNGhoNDRsNGhoNDRsNGhoNDRsNGg0aDRsaDRoNGg4NGhoNGg4aDRoNGg4MGxoNGg4MGxoNDRsZDhoNGg0NGw0aDRoNGw0aDRoaDgwbDRoaDhoNDRoaDhoNGg0aDhkOGg4MGxkOGg0NGwwbGg0NAAXc";
-            speed = [
-              "ssDkAlCfBgAGBQQhDCMIEQ4LBgQECwQEBBIFEScLEAQEGxYbDAQEHBgaBxIGEQcRBhoEFgQMDwkOCgQUBwYEDAQGBAsFEg8JBhIPCQ0PBBYEEgYSBxEPCQ8KDAwFBAQkBxAHEgcRBxIFEgcRDgsGKQ8JBxEGEgYSBgmpBA8LDwwODA4NDQ0NqhsNDRoNGhoOGg0NGhoOGg0aDQ0bDBsNGhoODBsNGhoODBsNGhoNDRsNGg0aDRsaDRoNGg4MGxoNGg4aDRoNGg4MGxoNGg4MGxoNDRoaDhoNGg4MGw0aDRsMGw0aDRoNGw0aDRoNGw0aGg0aDhoNGg0aDhkOGg4ZDhkOGg0aDhkODRoNAANJDgwODA4MDg0NDQ0NDgwODQ0NDQ0NDQ2rGg0NGg4aGg0aDQ0bGg0aDRoODBsNGg0bGg0NGg0bGg0NGg0bGg0NGg0bDRoNGhoNGw0aDQ0aGg4aDRoNGg4aDQ0aGg4aDQ0aGg4NGhoOGQ4aDQ0aDRsNGg0aDRsMGw0aDRoOGg0aDRsZDhoNGg4ZDhoNGg4ZDhoNGg4ZDhkOGg4MGw0AA4MODA4MDgwODQ4MDgwODA4MDg0NDQ0NDqoaDQ0aDhoaDRoNDhoaDRoNGw0NGg0bDRoaDQ0aDRsaDQ0aDRsaDQ0aDRsNGg0aGg4aDRoNDRsaDRoNGg4ZDhoNDRsZDhoNDRsZDg0aGg4ZDhoNDRoNGw0aDRoNGw0aGg0NGw0aDRoaDgwbGg0aDhoNGg0aDhkODRoaDhoNGg0NGhsNDQADSA4MDg0NDQ0NDgwODQ0NDQ0NDQ4NDQ0NqhsNDRoNGhsNGg0NGhoOGg0aDQ0bDRoNGhoODBsNGhoODRoNGhoODBsNGg0aDRsaDRoNGg4NGhoNGg4aDRoOGQ4NGhoOGQ4NGhoNDRsZDhoNGg4MGw0aDRsMGw0aDRsZDg0aDRsMGxoNDRsZDhoNGg0aDhoNGg0NGxoNGg0aDgwbGg0NAAXc"
-              "ssAwAVCfBgDxCA4NDQ0NqxoNDRsMGxoNGg4MGxoOGQ4ZDg0bDBsMGxoNDRsMGxoNDRoNGxkODRoNGw0aDRoaDhoNGg0NGhsNGg0aDhkOGg0NGxkOGg0NGhoODRoaDRoOGg0NGg0bDRoNGg0bDBsNGg0bDBsNGhoODBsaDRoOGQ4aDRoOGQ4aDRoOGQ4aDQ0bGQ4NAANIDg0NDQ0NDQ0NDQ4NDQ0NDQ0NDg0NDQ2qGg4NGg0aGg4aDQ0aGg4aDRoNDRsMGw0aGg4MGw0aGg0NGw0aGg0NGw0aDRoOGhoNGg0aDg0aGg0aDhoNGg0aDgwbGg0aDgwbGg0NGhoOGg0aDgwbDRoNGg0bDRoNGg0bDRoNGg0bGg0NGhoOGQ4aDRoOGQ4aDRoOGQ4aDRoODBsaDQ0ABdw="
-              "ssAwAVCfBgD2BA4MDg0NqhoODRoNGhoOGg0NGhoOGQ4aDgwbDBsNGhoODBsNGhoODBsNGhoNDRsNGg0aDRsaDRoNGg4MGxoNGg4aDRoNGg4NGhoNGg4MGxoNDRoaDhoNGg0NGw0aDRoOGg0aDRoaDg0aDRoNGw0aDRoaDhoNGg0aDRsNGg0NGhoOGg0aDhkOGg0NAANIDwwODA4MDgwODQ0NDgwODA4NDQ0NDQ2rGg0NGg4aGg0aDQ0bGg0aDRoODRoNGg0bGg0NGg0bGg0NGg0bGg0NGg0bDBsNGhoNGg4aDQ0aGg4aDRoNGg4aDQ0aGg4aDQ0aGg4MGxoNGg4ZDg0aDRsMGw0aDRoOGhoNDRoOGg0aDRoOGhoNGg0aDhoNGg0aDg0aGg0aDhoNGg0aDgwABdw="
-              "ssAwAVCfBgAAAQcODgwOqhoNDRoNGxoNGg4MGxoNGg4ZDgwbDRsMGxkODRsMGxkODRoNGxkODRoNGwwbDRoaDhoNGg0NGxoNGg0aDhkOGg0NGxkOGg0NGxkODRoaDRoOGg0NGg0bDBsNGg0bGg0NGg0bDBsNGg0bDBsaDRoNGw0aDRoNDRsaDRoNGg4aDRoNGg4MAANJDgwODQ0NDQ0ODA4NDQ0NDQ0NDgwODQ2qGw0NGg0aGwwbDQ0aGwwbDRoNDRsMGw0aGg4MGw0aGg4MGw0aGg4MGw0aDRoNGxoNGg0aDg0aGg0aDhoNGg0aDgwbGg0aDgwbGg0NGxoNGg0aDgwbDRoNGg0bDRoaDQ0bDRoNGg0bDRoNGhoOGg0aDRoOGg0NGhoNGw0aDRoOGQ4aDQ0ABdw="
-            ];
-          };
-        }
-      ];
-    };
-  };
-
-  services.huekit = {
-    enable = false;
-    port = 50002;
-    bridgeAddress = "192.168.10.64";
-  };
-
   services.mosquitto = {
     enable = true;
     dataDir = "/persist/mosquitto";
@@ -371,6 +291,33 @@ in
         ];
       }
     ];
+  };
+
+  services.mi2mqtt = {
+    enable = false;
+    server = "mqtt://localhost:50003?client_id=mi2mqtt";
+  };
+
+  virtualisation.docker = {
+    enable = true;
+    storageDriver = "zfs";
+    daemon.settings = {
+      data-root = "/persist/docker";
+      storage-opts = [ "zfs.fsname=tank/system/local/docker" ];
+    };
+  };
+
+  virtualisation.oci-containers.containers.homebridge = {
+    image = "homebridge/homebridge:2024-01-08";
+    extraOptions = [ "--network=host" "--privileged" ];
+    volumes = [
+      "/persist/homebridge:/homebridge"
+      "/var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket"
+      "/var/run/dbus:/var/run/dbus"
+    ];
+    environment = {
+      "ENABLE_AVAHI" = "0";
+    };
   };
 
   services.zigbee2mqtt = {

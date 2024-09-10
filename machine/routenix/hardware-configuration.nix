@@ -16,11 +16,13 @@
   fileSystems."/" =
     { device = "rpool/local/root";
       fsType = "zfs";
+      options = [ "noexec" ];
     };
 
   fileSystems."/boot" =
     { device = "/dev/disk/by-uuid/95a924fe-70c7-422f-aa2d-6b1a7dfbedf1";
       fsType = "ext4";
+      options = [ "noexec" ];
     };
 
   fileSystems."/nix" =
@@ -31,11 +33,19 @@
   fileSystems."/home" =
     { device = "rpool/safe/home";
       fsType = "zfs";
+      options = [ "noexec" ];
     };
 
   fileSystems."/persist" =
     { device = "rpool/safe/persist";
       fsType = "zfs";
+      options = [ "noexec" ];
+    };
+
+  fileSystems."/secret" =
+    { device = "rpool/local/secret";
+      fsType = "zfs";
+      options = [ "noexec" ];
     };
 
   swapDevices =

@@ -18,8 +18,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    launchd_shim = {
-      url = "github:benpye/launchd_shim";
+    home-manager-macos = {
+      url = "github:nix-community/home-manager/3ff5d6387c8d78e08d3a42502bd46b017ec5f9f1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -49,16 +49,6 @@
   in
   {
     homeConfigurations = lib.mkHomeConfigurations {
-      # MacBook
-      m1pro = {
-        home-manager = inputs.home-manager;
-        system = "aarch64-darwin";
-        stateVersion = "21.05";
-        username = "benpye";
-        homeDirectory = "/Users/benpye";
-        overlays = [ inputs.launchd_shim.overlay ];
-      };
-
       # Desktop
       hydrogen = {
         home-manager = inputs.home-manager;
@@ -66,6 +56,16 @@
         stateVersion = "23.11";
         username = "ben";
         homeDirectory = "/home/ben";
+        overlays = [ ];
+      };
+
+      # MacBook
+      helium = {
+        home-manager = inputs.home-manager-macos;
+        system = "aarch64-darwin";
+        stateVersion = "21.05";
+        username = "benpye";
+        homeDirectory = "/Users/benpye";
         overlays = [ ];
       };
     };

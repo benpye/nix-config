@@ -3,7 +3,7 @@
 {
   home.sessionPath = [ "/Applications/Visual Studio Code - Insiders.app/Contents/Resources/app/bin" ];
 
-  home.packages = [ pkgs.arduino-cli pkgs.rustup pkgs.qemu pkgs.gtkwave ];
+  home.packages = [ pkgs.rustup pkgs.qemu pkgs.gtkwave ];
 
   programs.git = {
     enable = true;
@@ -81,14 +81,25 @@
   services.gpg-agent = {
     enable = true;
     enableSshSupport = true;
-
-    # null pinentry will use the platform default - pinentry-mac on mac
-    pinentryFlavor = null;
   };
 
-  services.dirmngr = {
+  launchd.agents.gpg-agent-symlink = {
     enable = true;
+    config = {
+      ProgramArguments = [
+        "/bin/sh"
+        "-c"
+        "/bin/ln -sf ${config.home.homeDirectory}/.gnupg/S.gpg-agent.ssh $SSH_AUTH_SOCK"
+      ];
+      RunAtLoad = true;
+    };
   };
+
+  # services.ssh-agent.enable = true;
+
+  # services.dirmngr = {
+  #   enable = true;
+  # };
 
   # This value determines the Home Manager release that your
   # configuration is compatible with. This helps avoid breakage

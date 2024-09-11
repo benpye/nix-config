@@ -1,10 +1,16 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 with lib;
 
 let
   cfg = config.services.hkrm4;
-in {
+in
+{
   options = {
     services.hkrm4 = {
       enable = mkEnableOption "hkrm4";
@@ -46,24 +52,26 @@ in {
   config = mkIf cfg.enable {
     systemd.services.hkrm4 = {
       description = "hkrm4";
-      wantedBy    = [ "multi-user.target" ];
-      after       = [ "network.target" ];
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" ];
 
-      serviceConfig = let
-        configFile = pkgs.writeText "config.json" (builtins.toJSON cfg.config);
-      in {
-        ExecStart = ''
-          ${pkgs.hkrm4}/bin/hkrm4 \
-          -port ${toString cfg.port} \
-          -data /var/lib/hkrm4 \
-          -config ${configFile} \
-          -pin ${cfg.pin} \
-          ${optionalString (cfg.metricsPort != null) "-metrics ${toString cfg.metricsPort}"}
+      serviceConfig =
+        let
+          configFile = pkgs.writeText "config.json" (builtins.toJSON cfg.config);
+        in
+        {
+          ExecStart = ''
+            ${pkgs.hkrm4}/bin/hkrm4 \
+            -port ${toString cfg.port} \
+            -data /var/lib/hkrm4 \
+            -config ${configFile} \
+            -pin ${cfg.pin} \
+            ${optionalString (cfg.metricsPort != null) "-metrics ${toString cfg.metricsPort}"}
           '';
-        Restart = "always";
-        DynamicUser = true;
-        StateDirectory = "hkrm4";
-      };
+          Restart = "always";
+          DynamicUser = true;
+          StateDirectory = "hkrm4";
+        };
     };
   };
 }

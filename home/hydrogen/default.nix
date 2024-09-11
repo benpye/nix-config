@@ -1,4 +1,10 @@
-{ config, lib, pkgs, inputs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  inputs,
+  ...
+}:
 {
   nixpkgs.config = {
     allowUnfree = true;
@@ -99,7 +105,7 @@
   };
 
   programs.bash = {
-   enable = true;
+    enable = true;
   };
 
   services.gpg-agent = {
@@ -111,12 +117,13 @@
   programs.emacs = {
     enable = true;
     package = pkgs.emacs29-pgtk;
-    extraPackages = epkgs: with epkgs; [
-      treesit-grammars.with-all-grammars
-      nix-ts-mode
-      modus-themes
-      corfu
-    ];
+    extraPackages =
+      epkgs: with epkgs; [
+        treesit-grammars.with-all-grammars
+        nix-ts-mode
+        modus-themes
+        corfu
+      ];
     extraConfig = ''
       (when (display-graphic-p)
         (tool-bar-mode 0))
@@ -191,30 +198,32 @@
         max_bitrate = 1;
         never_convert_lossy_files = true;
         formats = {
-          flac_portable = let
-            convert_script = pkgs.writeShellScript "convert_to_portable_flac" ''
-              target_sample_rate="48000"
-              target_bit_depth="16"
+          flac_portable =
+            let
+              convert_script = pkgs.writeShellScript "convert_to_portable_flac" ''
+                target_sample_rate="48000"
+                target_bit_depth="16"
 
-              sample_rate=$(${pkgs.sox}/bin/soxi -r "$1")
-              bit_depth=$(${pkgs.sox}/bin/soxi -b "$1")
+                sample_rate=$(${pkgs.sox}/bin/soxi -r "$1")
+                bit_depth=$(${pkgs.sox}/bin/soxi -b "$1")
 
-              if [ "$sample_rate" -le "$target_sample_rate" ] && [ "$bit_depth" -le "$target_bit_depth" ]; then
-                cp "$1" "$2"
-              else
-                if [ "$sample_rate" -lt "$target_sample_rate" ]; then
-                  target_sample_rate="$sample_rate"
-                elif [ "$sample_rate" -eq "88200" ] || [ "$sample_rate" -eq "176400" ] || [ "$sample_rate" -eq "352800" ]; then
-                  target_sample_rate="44100"
+                if [ "$sample_rate" -le "$target_sample_rate" ] && [ "$bit_depth" -le "$target_bit_depth" ]; then
+                  cp "$1" "$2"
+                else
+                  if [ "$sample_rate" -lt "$target_sample_rate" ]; then
+                    target_sample_rate="$sample_rate"
+                  elif [ "$sample_rate" -eq "88200" ] || [ "$sample_rate" -eq "176400" ] || [ "$sample_rate" -eq "352800" ]; then
+                    target_sample_rate="44100"
+                  fi
+
+                  ${pkgs.sox}/bin/sox "$1" -G -b $target_bit_depth -r $target_sample_rate "$2"
                 fi
-
-                ${pkgs.sox}/bin/sox "$1" -G -b $target_bit_depth -r $target_sample_rate "$2"
-              fi
-            '';
-          in {
-            command = "${convert_script} $source $dest";
-            extension = "flac";
-          };
+              '';
+            in
+            {
+              command = "${convert_script} $source $dest";
+              extension = "flac";
+            };
         };
       };
     };

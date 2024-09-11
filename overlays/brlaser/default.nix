@@ -1,5 +1,4 @@
-self: super:
-{
+self: super: {
   brlaser = super.brlaser.overrideAttrs (oldAttrs: rec {
     name = "brlaser";
     version = "9d7ddda8383bfc4d205b5e1b49de2b8bcd9137f1";

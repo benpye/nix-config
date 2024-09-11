@@ -2,9 +2,14 @@
 let
   inherit (pkgs.stdenv) hostPlatform;
 
-  loadModule = file: { condition ? true }: {
-    inherit file condition;
-  };
+  loadModule =
+    file:
+    {
+      condition ? true,
+    }:
+    {
+      inherit file condition;
+    };
 
   modules = [
     (loadModule ./services/hkrm4.nix { })

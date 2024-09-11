@@ -1,4 +1,9 @@
-{ stdenv, lib, pkgs, buildGoModule }:
+{
+  stdenv,
+  lib,
+  pkgs,
+  buildGoModule,
+}:
 
 buildGoModule rec {
   name = "huekit";

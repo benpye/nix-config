@@ -1,9 +1,22 @@
-{ config, lib, pkgs, inputs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  inputs,
+  ...
+}:
 
 {
   home.sessionPath = [ "/Applications/Visual Studio Code - Insiders.app/Contents/Resources/app/bin" ];
 
-  home.packages = [ pkgs.rustup pkgs.qemu pkgs.gtkwave ];
+  home.packages = [
+    pkgs.rustup
+    pkgs.qemu
+    pkgs.gtkwave
+    pkgs.nix
+  ];
+
+  nix.package = pkgs.nix;
 
   programs.git = {
     enable = true;
@@ -74,7 +87,7 @@
   programs.zsh = {
     enable = true;
     envExtra = ''
-    . ${pkgs.nix}/etc/profile.d/nix.sh
+      . ${pkgs.nix}/etc/profile.d/nix.sh
     '';
   };
 

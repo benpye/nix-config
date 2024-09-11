@@ -1,8 +1,10 @@
-{ nixos
-, name
-, system
-, overlays ? []
-, imports ? [] }:
+{
+  nixos,
+  name,
+  system,
+  overlays ? [ ],
+  imports ? [ ],
+}:
 
 let
   pkgs = nixos.outputs.legacyPackages.${system};

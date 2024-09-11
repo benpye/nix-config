@@ -1,15 +1,20 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   lan = "enp0s20f2";
   wan = "enp4s0f0";
 
-in rec
-{
-  imports =
-    [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-    ];
+in
+rec {
+  imports = [
+    # Include the results of the hardware scan.
+    ./hardware-configuration.nix
+  ];
 
   nix = {
     settings = {
@@ -42,19 +47,30 @@ in rec
 
     # Use Linux 5.15 with the VeloCloud modules.
     kernelPackages = pkgs.linuxKernel.packages.linux_5_15;
-    extraModulePackages = [ (pkgs.velocloud-modules.override {
-      kernel = {
-        prePatch = "";
-      } // boot.kernelPackages.kernel;
-    }) ];
+    extraModulePackages = [
+      (pkgs.velocloud-modules.override {
+        kernel = {
+          prePatch = "";
+        } // boot.kernelPackages.kernel;
+      })
+    ];
 
     # Serial on ttyS1.
-    kernelParams = [ "console=ttyS1,115200n8" "acpi_enforce_resources=lax" ];
+    kernelParams = [
+      "console=ttyS1,115200n8"
+      "acpi_enforce_resources=lax"
+    ];
 
     # The required kernel modules for Ethernet, fan and LED control.
     initrd = {
-      kernelModules = [ "lpc_ich" "velocloud-edge-5x0" ];
-      availableKernelModules = [ "gpio_ich" "iTCO_wdt" ];
+      kernelModules = [
+        "lpc_ich"
+        "velocloud-edge-5x0"
+      ];
+      availableKernelModules = [
+        "gpio_ich"
+        "iTCO_wdt"
+      ];
       postDeviceCommands = lib.mkAfter ''
         zfs rollback -r rpool/local/root@blank
       '';
@@ -83,7 +99,10 @@ in rec
     hostName = "lithium";
     hostId = "3b8c16d1";
 
-    nameservers = [ "149.112.121.10" "1.1.1.1" ];
+    nameservers = [
+      "149.112.121.10"
+      "1.1.1.1"
+    ];
 
     useDHCP = false;
 
@@ -95,10 +114,12 @@ in rec
 
       ${lan} = {
         useDHCP = false;
-        ipv4.addresses = [{
-          address = "192.168.1.1";
-          prefixLength = 24;
-        }];
+        ipv4.addresses = [
+          {
+            address = "192.168.1.1";
+            prefixLength = 24;
+          }
+        ];
       };
 
       ${wan} = {
@@ -141,7 +162,12 @@ in rec
       ruleset = ''
         table inet filter {
           flowtable f {
-            hook ingress priority filter; devices = { ${lib.concatStringsSep ", " [ wan lan ]} };
+            hook ingress priority filter; devices = { ${
+              lib.concatStringsSep ", " [
+                wan
+                lan
+              ]
+            } };
           }
 
           chain output {
@@ -342,22 +368,22 @@ in rec
   services.radvd = {
     enable = true;
     config = ''
-    interface ${lan}
-    {
-      # enable ra on lan
-      AdvSendAdvert on;
+      interface ${lan}
+      {
+        # enable ra on lan
+        AdvSendAdvert on;
 
-      prefix ::/64 {
-        AdvOnLink on;
-        AdvAutonomous on;
-      };
+        prefix ::/64 {
+          AdvOnLink on;
+          AdvAutonomous on;
+        };
 
-      RDNSS 2620:10A:80BB::10 2606:4700:4700::1111 {
-      };
+        RDNSS 2620:10A:80BB::10 2606:4700:4700::1111 {
+        };
 
-      DNSSL int.hresult.dev {
+        DNSSL int.hresult.dev {
+        };
       };
-    };
     '';
   };
 
@@ -428,10 +454,10 @@ in rec
           remote_write = [
             {
               basic_auth = {
-                  password_file = "\${CREDENTIALS_DIRECTORY}/prom_remote_write_password";
-                  username = "1402961";
-                };
-                url = "https://prometheus-prod-32-prod-ca-east-0.grafana.net/api/prom/push";
+                password_file = "\${CREDENTIALS_DIRECTORY}/prom_remote_write_password";
+                username = "1402961";
+              };
+              url = "https://prometheus-prod-32-prod-ca-east-0.grafana.net/api/prom/push";
             }
           ];
         };
@@ -492,7 +518,7 @@ in rec
     '';
   };
 
-  environment.defaultPackages = lib.mkForce [];
+  environment.defaultPackages = lib.mkForce [ ];
 
   systemd.tmpfiles.rules = [
     "L /var/db/dhcpcd - - - - /persist/var/db/dhcpcd"
@@ -504,10 +530,9 @@ in rec
       extraGroups = [ "wheel" ];
       uid = 1000;
       isNormalUser = true;
-      openssh.authorizedKeys.keys =
-        [
-          "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDU7W3aX/Crbp4bKNRNZWRYaxgpH6tsjt88l6jspdlHToMz6Vvq4NU7CHwXNBijO0LTh7wxeKT3E5DZkPepE9gv7vRIrSX5NLHlLLAibC6iogF70SGqLeyEUXh70tMa+ZxU6wow5VcGxZ0RBXsuunKFhGqatveRaw6CbIYceLvnJvUBcsw0M3tr6EtyuTQ2p8BFoZNnYX+4Aj3HAz/uuwjUcgz3ri+Ot+yJKjkS2dV/aKCznQhvS3sX8Fio3eBI7XBm8oc5O1jI37y4Tckq/mnQORiTaKTvkbZmRojPgk7EdjACJJPVfk2mCnl/zcShQDyzOz5BhUOCvOObeJWseBp3"
-        ];
+      openssh.authorizedKeys.keys = [
+        "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDU7W3aX/Crbp4bKNRNZWRYaxgpH6tsjt88l6jspdlHToMz6Vvq4NU7CHwXNBijO0LTh7wxeKT3E5DZkPepE9gv7vRIrSX5NLHlLLAibC6iogF70SGqLeyEUXh70tMa+ZxU6wow5VcGxZ0RBXsuunKFhGqatveRaw6CbIYceLvnJvUBcsw0M3tr6EtyuTQ2p8BFoZNnYX+4Aj3HAz/uuwjUcgz3ri+Ot+yJKjkS2dV/aKCznQhvS3sX8Fio3eBI7XBm8oc5O1jI37y4Tckq/mnQORiTaKTvkbZmRojPgk7EdjACJJPVfk2mCnl/zcShQDyzOz5BhUOCvOObeJWseBp3"
+      ];
     };
   };
 

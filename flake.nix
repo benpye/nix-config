@@ -43,69 +43,76 @@
     };
   };
 
-  outputs = inputs@{ self, ... }:
-  let
-    lib = import ./lib {};
-  in
-  {
-    homeConfigurations = lib.mkHomeConfigurations {
-      # Desktop
-      hydrogen = {
-        home-manager = inputs.home-manager;
-        system = "x86_64-linux";
-        stateVersion = "23.11";
-        username = "ben";
-        homeDirectory = "/home/ben";
-        overlays = [ ];
+  outputs =
+    inputs@{ self, ... }:
+    let
+      lib = import ./lib { };
+    in
+    {
+      homeConfigurations = lib.mkHomeConfigurations {
+        # Desktop
+        hydrogen = {
+          home-manager = inputs.home-manager;
+          system = "x86_64-linux";
+          stateVersion = "23.11";
+          username = "ben";
+          homeDirectory = "/home/ben";
+          overlays = [ ];
+        };
+
+        # MacBook
+        helium = {
+          home-manager = inputs.home-manager-macos;
+          system = "aarch64-darwin";
+          stateVersion = "21.05";
+          username = "benpye";
+          homeDirectory = "/Users/benpye";
+          overlays = [ ];
+        };
       };
 
-      # MacBook
-      helium = {
-        home-manager = inputs.home-manager-macos;
-        system = "aarch64-darwin";
-        stateVersion = "21.05";
-        username = "benpye";
-        homeDirectory = "/Users/benpye";
-        overlays = [ ];
-      };
-    };
+      nixosConfigurations = lib.mkNixosConfigurations {
+        # Desktop
+        hydrogen = {
+          nixos = inputs.nixos;
+          system = "x86_64-linux";
+          overlays = [ inputs.nix-fpga-tools.overlay ];
+        };
 
-    nixosConfigurations = lib.mkNixosConfigurations {
-      # Desktop
-      hydrogen = {
-        nixos = inputs.nixos;
-        system = "x86_64-linux";
-        overlays = [ inputs.nix-fpga-tools.overlay ];
-      };
+        # Home server
+        nixserve = {
+          nixos = inputs.nixos-2311;
+          system = "x86_64-linux";
+          overlays = [
+            inputs.mi2mqtt.overlay
+          ];
+        };
 
-      # Home server
-      nixserve = {
-        nixos = inputs.nixos-2311;
-        system = "x86_64-linux";
-        overlays = [
-          inputs.mi2mqtt.overlay
-        ];
+        # Router
+        routenix = {
+          nixos = inputs.nixos-2311;
+          system = "x86_64-linux";
+          overlays = [ inputs.nix-velocloud.overlay ];
+        };
       };
 
-      # Router
-      routenix = {
-        nixos = inputs.nixos-2311;
-        system = "x86_64-linux";
-        overlays = [ inputs.nix-velocloud.overlay ];
-      };
-    };
-
-  } // inputs.flake-utils.lib.eachDefaultSystem (system:
-  let
-    pkgs = import inputs.nixpkgs {
-      inherit system;
-      overlays = [ (import ./pkgs) ] ++ (import ./overlays);
-    };
-  in
-  {
-    packages = pkgs // inputs.flake-utils.lib.flattenTree {
-      # Export nixos-rebuild package with unstable nix for flakes.
-      nixos-rebuild = pkgs.nixos-rebuild.override { nix = pkgs.nixUnstable; };
-    };
-  });
+    }
+    // inputs.flake-utils.lib.eachDefaultSystem (
+      system:
+      let
+        pkgs = import inputs.nixpkgs {
+          inherit system;
+          overlays = [ (import ./pkgs) ] ++ (import ./overlays);
+        };
+      in
+      {
+        packages =
+          pkgs
+          // inputs.flake-utils.lib.flattenTree {
+            # Export nixos-rebuild package with unstable nix for flakes.
+            nixos-rebuild = pkgs.nixos-rebuild.override { nix = pkgs.nixUnstable; };
+          };
+        formatter = pkgs.nixfmt-rfc-style;
+      }
+    );
 }

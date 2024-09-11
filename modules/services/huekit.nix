@@ -1,10 +1,16 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 with lib;
 
 let
   cfg = config.services.huekit;
-in {
+in
+{
   options = {
     services.huekit = {
       enable = mkEnableOption "huekit";
@@ -37,8 +43,8 @@ in {
   config = mkIf cfg.enable {
     systemd.services.huekit = {
       description = "huekit";
-      wantedBy    = [ "multi-user.target" ];
-      after       = [ "network.target" ];
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" ];
 
       serviceConfig = {
         ExecStart = "${pkgs.huekit}/bin/huekit";

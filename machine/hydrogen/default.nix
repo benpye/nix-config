@@ -1,10 +1,15 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 {
-  imports =
-    [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-    ];
+  imports = [
+    # Include the results of the hardware scan.
+    ./hardware-configuration.nix
+  ];
 
   nixpkgs.config.allowUnfree = true;
 
@@ -28,8 +33,13 @@
     kernelParams = [ "pci=realloc,assign-busses" ];
 
     # Reserve Nvidia GPU for VFIO only
-    kernelModules = [ "vfio" "vfio_iommu_type1" "vfio_pci" "vfio_virqfd" ];
-    extraModprobeConfig ="options vfio-pci ids=10de:1b81,10de:10f0";
+    kernelModules = [
+      "vfio"
+      "vfio_iommu_type1"
+      "vfio_pci"
+      "vfio_virqfd"
+    ];
+    extraModprobeConfig = "options vfio-pci ids=10de:1b81,10de:10f0";
 
     # Apparently needed for video out?
     initrd.kernelModules = [ "amdgpu" ];
@@ -93,11 +103,14 @@
 
   programs.xwayland.enable = true;
 
-  services.udev.packages = [ pkgs.yubikey-personalization pkgs.vuescan ]; # pkgs.xilinx-udev-rules ];
+  services.udev.packages = [
+    pkgs.yubikey-personalization
+    pkgs.vuescan
+  ]; # pkgs.xilinx-udev-rules ];
 
   security.polkit.enable = true;
   security.rtkit.enable = true;
-  security.pam.services.swaylock = {};
+  security.pam.services.swaylock = { };
 
   services.pipewire = {
     enable = true;
@@ -152,4 +165,3 @@
   system.stateVersion = "23.11"; # Did you read the comment?
 
 }
-

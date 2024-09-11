@@ -1,13 +1,17 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 
 let
   hostName = "nixserve";
 in
 {
-  imports =
-    [
-      ./hardware-configuration.nix
-    ];
+  imports = [
+    ./hardware-configuration.nix
+  ];
 
   nixpkgs.config.allowUnfree = true;
 
@@ -22,7 +26,11 @@ in
     };
 
     initrd = {
-      kernelModules = [ "tg3" "mlx4_core" "mlx4_en" ];
+      kernelModules = [
+        "tg3"
+        "mlx4_core"
+        "mlx4_en"
+      ];
 
       network = {
         enable = true;
@@ -31,15 +39,13 @@ in
           enable = true;
           # Different port for boot SSH to avoid mismatched certs
           port = 2222;
-          authorizedKeys =
-            [
-              "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDU7W3aX/Crbp4bKNRNZWRYaxgpH6tsjt88l6jspdlHToMz6Vvq4NU7CHwXNBijO0LTh7wxeKT3E5DZkPepE9gv7vRIrSX5NLHlLLAibC6iogF70SGqLeyEUXh70tMa+ZxU6wow5VcGxZ0RBXsuunKFhGqatveRaw6CbIYceLvnJvUBcsw0M3tr6EtyuTQ2p8BFoZNnYX+4Aj3HAz/uuwjUcgz3ri+Ot+yJKjkS2dV/aKCznQhvS3sX8Fio3eBI7XBm8oc5O1jI37y4Tckq/mnQORiTaKTvkbZmRojPgk7EdjACJJPVfk2mCnl/zcShQDyzOz5BhUOCvOObeJWseBp3"
-            ];
-          hostKeys =
-            [
-              /etc/secrets/initrd/ssh_host_rsa_key
-              /etc/secrets/initrd/ssh_host_ed25519_key
-            ];
+          authorizedKeys = [
+            "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDU7W3aX/Crbp4bKNRNZWRYaxgpH6tsjt88l6jspdlHToMz6Vvq4NU7CHwXNBijO0LTh7wxeKT3E5DZkPepE9gv7vRIrSX5NLHlLLAibC6iogF70SGqLeyEUXh70tMa+ZxU6wow5VcGxZ0RBXsuunKFhGqatveRaw6CbIYceLvnJvUBcsw0M3tr6EtyuTQ2p8BFoZNnYX+4Aj3HAz/uuwjUcgz3ri+Ot+yJKjkS2dV/aKCznQhvS3sX8Fio3eBI7XBm8oc5O1jI37y4Tckq/mnQORiTaKTvkbZmRojPgk7EdjACJJPVfk2mCnl/zcShQDyzOz5BhUOCvOObeJWseBp3"
+          ];
+          hostKeys = [
+            /etc/secrets/initrd/ssh_host_rsa_key
+            /etc/secrets/initrd/ssh_host_ed25519_key
+          ];
         };
       };
     };
@@ -55,8 +61,29 @@ in
   networking.interfaces.enp7s0.useDHCP = true;
 
   networking.firewall.enable = true;
-  networking.firewall.allowedTCPPorts = [ 22 80 139 443 445 631 5353 8581 9003 21064 50000 50004 51943 ];
-  networking.firewall.allowedUDPPorts = [ 80 137 138 443 631 5353 ];
+  networking.firewall.allowedTCPPorts = [
+    22
+    80
+    139
+    443
+    445
+    631
+    5353
+    8581
+    9003
+    21064
+    50000
+    50004
+    51943
+  ];
+  networking.firewall.allowedUDPPorts = [
+    80
+    137
+    138
+    443
+    631
+    5353
+  ];
 
   # Use UTC for servers.
   time.timeZone = "UTC";
@@ -93,47 +120,48 @@ in
     recommendedProxySettings = true;
 
     virtualHosts =
-    let
-      extraConfig = ''
-        add_header 'Strict-Transport-Security' 'max-age=63072000; includeSubDomains; preload';
-      '';
-    in {
-      "bw.benpye.uk" = {
-        useACMEHost = "benpye.uk";
-        forceSSL = true;
+      let
+        extraConfig = ''
+          add_header 'Strict-Transport-Security' 'max-age=63072000; includeSubDomains; preload';
+        '';
+      in
+      {
+        "bw.benpye.uk" = {
+          useACMEHost = "benpye.uk";
+          forceSSL = true;
 
-        locations = {
-          "/" = {
-            inherit extraConfig;
-            proxyPass = "http://localhost:8000";
+          locations = {
+            "/" = {
+              inherit extraConfig;
+              proxyPass = "http://localhost:8000";
+            };
+
+            "/notifications/hub" = {
+              inherit extraConfig;
+              proxyPass = "http://localhost:3012";
+              proxyWebsockets = true;
+            };
+
+            "/notifications/hub/negotiate" = {
+              inherit extraConfig;
+              proxyPass = "http://localhost:8000";
+            };
           };
+        };
 
-          "/notifications/hub" = {
-            inherit extraConfig;
-            proxyPass = "http://localhost:3012";
-            proxyWebsockets = true;
-          };
+        "lounge.benpye.uk" = {
+          useACMEHost = "benpye.uk";
+          forceSSL = true;
 
-          "/notifications/hub/negotiate" = {
-            inherit extraConfig;
-            proxyPass = "http://localhost:8000";
+          locations = {
+            "/" = {
+              inherit extraConfig;
+              proxyPass = "http://localhost:9000";
+              proxyWebsockets = true;
+            };
           };
         };
       };
-
-      "lounge.benpye.uk" = {
-        useACMEHost = "benpye.uk";
-        forceSSL = true;
-
-        locations = {
-          "/" = {
-            inherit extraConfig;
-            proxyPass = "http://localhost:9000";
-            proxyWebsockets = true;
-          };
-        };
-      };
-    };
   };
 
   services.avahi = {
@@ -151,7 +179,10 @@ in
     enable = true;
     package = pkgs.postgresql_14;
     dataDir = "/persist/pgsql/14";
-    ensureDatabases = [ "bitwarden_rs" "hass" ];
+    ensureDatabases = [
+      "bitwarden_rs"
+      "hass"
+    ];
     ensureUsers = [
       {
         name = "vaultwarden";
@@ -309,7 +340,10 @@ in
 
   virtualisation.oci-containers.containers.homebridge = {
     image = "homebridge/homebridge:2024-01-08";
-    extraOptions = [ "--network=host" "--privileged" ];
+    extraOptions = [
+      "--network=host"
+      "--privileged"
+    ];
     volumes = [
       "/persist/homebridge:/homebridge"
       "/var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket"
@@ -346,7 +380,10 @@ in
 
   virtualisation.oci-containers.containers.homebridge = {
     image = "oznu/homebridge:latest";
-    extraOptions = [ "--network=host" "--privileged" ];
+    extraOptions = [
+      "--network=host"
+      "--privileged"
+    ];
     volumes = [
       "/persist/homebridge:/homebridge"
       "/var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket"
@@ -361,13 +398,15 @@ in
 
   users.users = {
     ben = {
-      extraGroups = [ "wheel" "sharewriters" ];
+      extraGroups = [
+        "wheel"
+        "sharewriters"
+      ];
       uid = 1000;
       isNormalUser = true;
-      openssh.authorizedKeys.keys =
-        [
-          "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDU7W3aX/Crbp4bKNRNZWRYaxgpH6tsjt88l6jspdlHToMz6Vvq4NU7CHwXNBijO0LTh7wxeKT3E5DZkPepE9gv7vRIrSX5NLHlLLAibC6iogF70SGqLeyEUXh70tMa+ZxU6wow5VcGxZ0RBXsuunKFhGqatveRaw6CbIYceLvnJvUBcsw0M3tr6EtyuTQ2p8BFoZNnYX+4Aj3HAz/uuwjUcgz3ri+Ot+yJKjkS2dV/aKCznQhvS3sX8Fio3eBI7XBm8oc5O1jI37y4Tckq/mnQORiTaKTvkbZmRojPgk7EdjACJJPVfk2mCnl/zcShQDyzOz5BhUOCvOObeJWseBp3"
-        ];
+      openssh.authorizedKeys.keys = [
+        "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDU7W3aX/Crbp4bKNRNZWRYaxgpH6tsjt88l6jspdlHToMz6Vvq4NU7CHwXNBijO0LTh7wxeKT3E5DZkPepE9gv7vRIrSX5NLHlLLAibC6iogF70SGqLeyEUXh70tMa+ZxU6wow5VcGxZ0RBXsuunKFhGqatveRaw6CbIYceLvnJvUBcsw0M3tr6EtyuTQ2p8BFoZNnYX+4Aj3HAz/uuwjUcgz3ri+Ot+yJKjkS2dV/aKCznQhvS3sX8Fio3eBI7XBm8oc5O1jI37y4Tckq/mnQORiTaKTvkbZmRojPgk7EdjACJJPVfk2mCnl/zcShQDyzOz5BhUOCvOObeJWseBp3"
+      ];
     };
   };
 

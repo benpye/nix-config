@@ -1,5 +1,15 @@
-{ lib, stdenv, requireFile, gnutar, autoPatchelfHook, glibc, gtk2, xorg, libgudev
-, makeDesktopItem }:
+{
+  lib,
+  stdenv,
+  requireFile,
+  gnutar,
+  autoPatchelfHook,
+  glibc,
+  gtk2,
+  xorg,
+  libgudev,
+  makeDesktopItem,
+}:
 let
   pname = "vuescan";
   version = "9.8.33";
@@ -12,11 +22,18 @@ let
     terminal = false;
     type = "Application";
     startupNotify = true;
-    categories = [ "Graphics" "Utility" ];
-    keywords = [ "scan" "scanner" ];
+    categories = [
+      "Graphics"
+      "Utility"
+    ];
+    keywords = [
+      "scan"
+      "scanner"
+    ];
     exec = "vuescan";
   };
-in stdenv.mkDerivation rec {
+in
+stdenv.mkDerivation rec {
   name = "${pname}-${version}";
 
   src = requireFile {
@@ -28,9 +45,17 @@ in stdenv.mkDerivation rec {
   # Stripping breaks the program
   dontStrip = true;
 
-  nativeBuildInputs = [ gnutar autoPatchelfHook ];
+  nativeBuildInputs = [
+    gnutar
+    autoPatchelfHook
+  ];
 
-  buildInputs = [ glibc gtk2 xorg.libSM libgudev ];
+  buildInputs = [
+    glibc
+    gtk2
+    xorg.libSM
+    libgudev
+  ];
 
   unpackPhase = ''
     tar xfz $src

@@ -1,5 +1,4 @@
-self: super:
-{
+self: super: {
   streamrip-dev = super.streamrip.overrideAttrs (oldAttrs: rec {
     version = "4c98dbd44ece7e0d1d9d199e4d743793690e872b";
 
